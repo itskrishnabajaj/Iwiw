@@ -7,7 +7,15 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' (not 'autoUpdate'): a new service worker WAITS instead of
+      // activating mid-session. The app detects it, tells the user, and only
+      // skip-waits + reloads on explicit action — so a redeploy can never swap
+      // assets under a running tab (the stale-bundle / ChunkLoadError class of bug).
+      registerType: 'prompt',
+      // We register + drive the SW ourselves (src/lib/pwa/pwa.ts) so the update
+      // prompt and "Check for Updates" share one registration. Disable the
+      // plugin's auto-injected registration to avoid a duplicate.
+      injectRegister: false,
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Personal OS — Command Center',
@@ -25,10 +33,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // Guarantee a redeploy is never trapped behind a stale service worker.
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
+        // NOTE: deliberately NO skipWaiting / clientsClaim. The new worker waits
+        // until the user accepts the update (see usePwaUpdate), so assets are only
+        // ever swapped during a clean, full reload.
         // SPA: serve index.html for client-routed deep links (incl. offline).
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],

@@ -232,15 +232,15 @@ export const useAppStore = create<AppStore>()(
 
       markUnlocked: (ids) =>
         set((s) => {
+          const fresh = ids.filter((aid) => !s.unlockedAchievements[aid])
+          // No new unlocks → return the SAME references so no state change /
+          // persist write / re-render is triggered (avoids a redundant IndexedDB
+          // write on every XP gain).
+          if (fresh.length === 0) return s
           const next = { ...s.unlockedAchievements }
-          const fresh: string[] = []
-          for (const aid of ids) {
-            if (!next[aid]) {
-              next[aid] = Date.now()
-              fresh.push(aid)
-            }
-          }
-          return { unlockedAchievements: next, newlyUnlocked: fresh.length ? fresh : s.newlyUnlocked }
+          const ts = Date.now()
+          for (const aid of fresh) next[aid] = ts
+          return { unlockedAchievements: next, newlyUnlocked: fresh }
         }),
       clearUnlockToast: () => set({ newlyUnlocked: [] }),
       clearLevelUp: () => set({ pendingLevelUp: null }),

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react'
+import { useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { router } from './router'
@@ -6,10 +6,10 @@ import { AuroraBackground } from './components/ui/AuroraBackground'
 import { MouseGlow } from './components/ui/MouseGlow'
 import { LevelUpModal } from './components/celebrate/LevelUpModal'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
+import { UpdateBanner } from './components/pwa/UpdateBanner'
+import Onboarding from './features/onboarding/Onboarding'
 import { useAppStore } from './store/useAppStore'
 import { usePrefs } from './hooks/usePrefs'
-
-const Onboarding = lazy(() => import('./features/onboarding/Onboarding'))
 
 function BootScreen() {
   return (
@@ -22,6 +22,18 @@ function BootScreen() {
   )
 }
 
+// Isolated so a preference change (accent, motion, density) re-renders ONLY the
+// background effects — not App / the entire RouterProvider subtree.
+function BgEffects() {
+  const [prefs] = usePrefs()
+  return (
+    <>
+      {prefs.animationDensity !== 'minimal' && <AuroraBackground />}
+      {prefs.animationDensity === 'full' && !prefs.reduceMotion && <MouseGlow />}
+    </>
+  )
+}
+
 export default function App() {
   const hydrated = useAppStore((s) => s.hydrated)
   const [prefs] = usePrefs()
@@ -30,21 +42,17 @@ export default function App() {
 
   return (
     <>
-      {prefs.animationDensity !== 'minimal' && <AuroraBackground />}
-      {prefs.animationDensity === 'full' && !prefs.reduceMotion && <MouseGlow />}
+      <BgEffects />
       <ErrorBoundary label="app">
         {!hydrated ? (
           <BootScreen />
         ) : showOnboarding ? (
-          <Suspense fallback={<BootScreen />}>
-            <Onboarding onDone={() => setJustFinished(true)} />
-          </Suspense>
+          <Onboarding onDone={() => setJustFinished(true)} />
         ) : (
-          <Suspense fallback={<BootScreen />}>
-            <RouterProvider router={router} />
-          </Suspense>
+          <RouterProvider router={router} />
         )}
       </ErrorBoundary>
+      <UpdateBanner />
       <LevelUpModal />
       <Toaster
         position="bottom-right"

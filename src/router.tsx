@@ -1,29 +1,34 @@
-import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
 import { CommandPalette } from './components/layout/CommandPalette'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useAppEffects } from './hooks/useAppEffects'
 
-const Home = lazy(() => import('./features/home/Home'))
-const Today = lazy(() => import('./features/today/Today'))
-const Progress = lazy(() => import('./features/rpg/Progress'))
-const Habits = lazy(() => import('./features/habits/Habits'))
-const Goals = lazy(() => import('./features/goals/Goals'))
-const Analytics = lazy(() => import('./features/analytics/Analytics'))
-const MBA = lazy(() => import('./features/areas/MBA'))
-const QuantReflex = lazy(() => import('./features/areas/QuantReflex'))
-const CRM = lazy(() => import('./features/areas/CRM'))
-const Learning = lazy(() => import('./features/areas/Learning'))
-const Gym = lazy(() => import('./features/areas/Gym'))
-const Finance = lazy(() => import('./features/areas/Finance'))
-const Personal = lazy(() => import('./features/areas/Personal'))
-const Journal = lazy(() => import('./features/journal/Journal'))
-const Calendar = lazy(() => import('./features/calendar/Calendar'))
-const Vision = lazy(() => import('./features/vision/Vision'))
-const Achievements = lazy(() => import('./features/achievements/Achievements'))
-const Focus = lazy(() => import('./features/focus/Focus'))
-const Settings = lazy(() => import('./features/settings/Settings'))
+// Routes are EAGERLY imported (no React.lazy). This means:
+//  - navigation never suspends → instant, flash-free screen swaps;
+//  - the whole app ships as one atomically-replaced bundle, so a redeploy can
+//    never leave the running app requesting a stale/missing route chunk
+//    (the ChunkLoadError class of post-deploy breakage). Stability > a smaller
+//    initial download for a daily-use personal app.
+import Home from './features/home/Home'
+import Today from './features/today/Today'
+import Progress from './features/rpg/Progress'
+import Habits from './features/habits/Habits'
+import Goals from './features/goals/Goals'
+import Analytics from './features/analytics/Analytics'
+import MBA from './features/areas/MBA'
+import QuantReflex from './features/areas/QuantReflex'
+import CRM from './features/areas/CRM'
+import Learning from './features/areas/Learning'
+import Gym from './features/areas/Gym'
+import Finance from './features/areas/Finance'
+import Personal from './features/areas/Personal'
+import Journal from './features/journal/Journal'
+import Calendar from './features/calendar/Calendar'
+import Vision from './features/vision/Vision'
+import Achievements from './features/achievements/Achievements'
+import Focus from './features/focus/Focus'
+import Settings from './features/settings/Settings'
 
 function Root() {
   useAppEffects()

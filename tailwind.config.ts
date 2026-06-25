@@ -48,12 +48,14 @@ export default {
         'glow-cyan': '0 0 40px -8px rgba(54,230,224,0.4)',
         card: '0 8px 40px -12px rgba(0,0,0,0.6)',
       },
-      // Use the dynamic viewport unit so mobile URL-bar show/hide doesn't jump layout.
+      // Use the STABLE small-viewport unit. Unlike 100dvh (which recomputes every
+      // frame as the mobile URL bar collapses → scroll-time layout thrash) and
+      // 100vh (content hidden under the URL bar), 100svh is fixed and never resizes.
       height: {
-        screen: '100dvh',
+        screen: '100svh',
       },
       minHeight: {
-        screen: '100dvh',
+        screen: '100svh',
       },
       backdropBlur: {
         xs: '2px',

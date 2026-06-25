@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAppStore } from '@/store/useAppStore'
 import { usePrefs } from '@/hooks/usePrefs'
+import { usePwaUpdate } from '@/hooks/usePwaUpdate'
 import { storage, type Diagnostics, type BackupSnapshot } from '@/lib/storage/StorageService'
 import { ACCENTS, type ThemeAccent, type AnimationDensity } from '@/lib/storage/prefs'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -156,6 +157,8 @@ function DataPanel() {
           )}
         </GlassCard>
 
+        <AppUpdatesCard />
+
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-bad/90">Danger zone</h3>
           <p className="mt-1 text-sm text-white/45">These take a safety backup first, but proceed carefully.</p>
@@ -166,6 +169,33 @@ function DataPanel() {
         </GlassCard>
       </div>
     </div>
+  )
+}
+
+function AppUpdatesCard() {
+  const { status, needRefresh, checkForUpdates, applyUpdate } = usePwaUpdate()
+  const onCheck = async () => {
+    const result = await checkForUpdates()
+    if (result === 'up-to-date') toast.success('You’re on the latest version')
+    else if (result === 'available') toast('Update available — reload to apply', { icon: '✨' })
+    else if (result === 'error') toast.error('Couldn’t check (updates need the deployed app)')
+  }
+  return (
+    <GlassCard className="p-6">
+      <h3 className="text-lg font-semibold">App updates</h3>
+      <p className="mt-1 text-sm text-white/45">
+        Updates download in the background and apply on reload. Your data and settings are always preserved.
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Button variant="glass" onClick={onCheck} disabled={status === 'checking'}>
+          {status === 'checking' ? 'Checking…' : '↻ Check for updates'}
+        </Button>
+        {needRefresh && (
+          <Button onClick={() => applyUpdate()}>Reload to update</Button>
+        )}
+        {status === 'up-to-date' && !needRefresh && <span className="text-sm text-good">Up to date ✓</span>}
+      </div>
+    </GlassCard>
   )
 }
 

@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react'
+import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
@@ -48,23 +48,16 @@ export function AppShell() {
           </button>
         </header>
 
-        {/* Routed content. Suspense lives HERE (not at the app root) so a lazy
-            route chunk only suspends the content area — the shell never unmounts,
-            so navigation can't flash a full-screen spinner. */}
+        {/* Routed content. Routes are eagerly imported, so navigation never
+            suspends — the shell stays mounted and content swaps instantly with
+            no fade/fallback (the most stable, native-feeling behavior). The
+            ErrorBoundary is keyed per route so an error never persists across navigation. */}
         <main className="flex-1 overflow-y-auto px-4 pb-16 md:px-8">
-          <Suspense fallback={<div className="min-h-[40vh]" />}>
-            <ErrorBoundary key={location.pathname} label={location.pathname.replace('/', '') || 'home'}>
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.12, ease: 'easeOut' }}
-                className="mx-auto max-w-7xl"
-              >
-                <Outlet />
-              </motion.div>
-            </ErrorBoundary>
-          </Suspense>
+          <ErrorBoundary key={location.pathname} label={location.pathname.replace('/', '') || 'home'}>
+            <div className="mx-auto max-w-7xl">
+              <Outlet />
+            </div>
+          </ErrorBoundary>
         </main>
       </div>
     </div>
