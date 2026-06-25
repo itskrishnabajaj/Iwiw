@@ -2,6 +2,7 @@ import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
 import { CommandPalette } from './components/layout/CommandPalette'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useAppEffects } from './hooks/useAppEffects'
 
 const Home = lazy(() => import('./features/home/Home'))
@@ -59,5 +60,5 @@ export const router = createBrowserRouter([
       { path: 'settings', element: <Settings /> },
     ],
   },
-  { path: '/focus', element: <Focus /> },
+  { path: '/focus', element: <ErrorBoundary label="focus"><Focus /></ErrorBoundary> },
 ])

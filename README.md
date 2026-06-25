@@ -84,6 +84,16 @@ npm run build    # type-check + production build
 npm run preview  # serve the production build
 ```
 
+## Deploy to Vercel
+
+The repo is deployment-ready. Import it into Vercel (it auto-detects Vite):
+build command `npm run build`, output dir `dist`. `vercel.json` adds the SPA
+rewrite (so deep links like `/mba` don't 404) and sets `Cache-Control: no-cache`
+on `sw.js` / `index.html` so a redeploy is never trapped behind a stale service
+worker (the SW uses `skipWaiting` + `clientsClaim` + `cleanupOutdatedCaches` and
+auto-updates). No environment variables are required — the app is fully
+client-side. Offline falls back to system fonts (Google Fonts are CDN-loaded).
+
 ## Project structure
 
 ```

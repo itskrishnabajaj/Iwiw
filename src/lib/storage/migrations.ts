@@ -29,6 +29,10 @@ export function runMigrations(
   let d = data
   let v = fromVersion || 1
   const applied: string[] = []
+  // Data written by a NEWER app build (downgrade) — don't migrate forward or
+  // loop; hand it back as-is. validateAppData() will normalize the shape and
+  // stamp the current version without wiping the user's data.
+  if (v > DATA_VERSION) return { data: d, version: v, applied }
   // safety bound to avoid infinite loops on a malformed chain
   let guard = 0
   while (v < DATA_VERSION && guard++ < 100) {

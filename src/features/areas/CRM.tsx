@@ -5,6 +5,8 @@ import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionTitle, Stat, Tag, Input, Textarea } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { todayISO, iso } from '@/lib/dates'
+import { addDays } from 'date-fns'
 import type { Institute, PipelineStage } from '@/lib/types'
 
 const STAGES: { key: PipelineStage; label: string; color: string }[] = [
@@ -22,7 +24,7 @@ export default function CRM() {
   const partners = s.institutes.filter((i) => i.stage === 'partner').length
   const avgProb = s.institutes.length ? Math.round(s.institutes.reduce((a, i) => a + i.probability, 0) / s.institutes.length) : 0
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayISO()
   const expectedPartners = (s.institutes.filter((i) => i.stage !== 'partner').reduce((a, i) => a + i.probability, 0) / 100).toFixed(1)
   const overdue = s.institutes.filter((i) => i.followUp && i.followUp < today && i.stage !== 'partner').sort((a, b) => (a.followUp! < b.followUp! ? -1 : 1))
   const active = s.institutes.filter((i) => i.stage !== 'partner').length
@@ -70,7 +72,7 @@ export default function CRM() {
                     <div className="text-sm font-medium">{i.name}</div>
                     <div className="text-[11px] text-bad/80">due {i.followUp}</div>
                   </div>
-                  <button onClick={() => s.updateInstitute(i.id, { followUp: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) })} aria-label={`Snooze follow-up for ${i.name} one week`} className="rounded-lg bg-white/5 px-2.5 py-1 text-xs text-white/60 hover:bg-white/10">Logged ✓</button>
+                  <button onClick={() => s.updateInstitute(i.id, { followUp: iso(addDays(new Date(), 7)) })} aria-label={`Snooze follow-up for ${i.name} one week`} className="rounded-lg bg-white/5 px-2.5 py-1 text-xs text-white/60 hover:bg-white/10">Logged ✓</button>
                 </div>
               ))}
             </div>

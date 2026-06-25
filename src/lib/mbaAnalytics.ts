@@ -19,10 +19,11 @@ export function sectionStats(mba: MBAState) {
 export function studyVelocity(mba: MBAState, days = 30) {
   const byDate = new Map(mba.studyLogs.map((l) => [l.date, l.hours]))
   const out: { date: string; rolling: number; raw: number }[] = []
+  const now = new Date() // capture once so the loop can't straddle midnight
   for (let i = days - 1; i >= 0; i--) {
-    const date = iso(subDays(new Date(), i))
+    const date = iso(subDays(now, i))
     let sum = 0
-    for (let j = 0; j < 7; j++) sum += byDate.get(iso(subDays(new Date(), i + j))) ?? 0
+    for (let j = 0; j < 7; j++) sum += byDate.get(iso(subDays(now, i + j))) ?? 0
     out.push({ date, rolling: +(sum / 7).toFixed(2), raw: byDate.get(date) ?? 0 })
   }
   return out

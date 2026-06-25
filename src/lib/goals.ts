@@ -11,8 +11,11 @@ export function leafProgress(goal: Goal): number {
 }
 
 // Progress for any goal, rolling up the average of its children when present.
-export function goalProgress(goal: Goal, all: Goal[]): number {
+// `visited` guards against a malformed parentId cycle causing infinite recursion.
+export function goalProgress(goal: Goal, all: Goal[], visited: Set<string> = new Set()): number {
+  if (visited.has(goal.id)) return leafProgress(goal)
+  visited.add(goal.id)
   const children = all.filter((g) => g.parentId === goal.id)
   if (children.length === 0) return leafProgress(goal)
-  return clamp(children.reduce((sum, c) => sum + goalProgress(c, all), 0) / children.length)
+  return clamp(children.reduce((sum, c) => sum + goalProgress(c, all, visited), 0) / children.length)
 }

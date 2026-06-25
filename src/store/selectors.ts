@@ -1,6 +1,6 @@
 import type { AppData, AreaKey } from '@/lib/types'
 import { levelFromXP, totalXP } from '@/lib/xp'
-import { lastNDates, todayISO } from '@/lib/dates'
+import { lastNDates, todayISO, iso } from '@/lib/dates'
 import { currentStreak } from '@/lib/streaks'
 
 export const AREA_META: Record<AreaKey, { label: string; color: string; emoji: string; route: string }> = {
@@ -40,7 +40,7 @@ export function activityHeatmap(s: AppData, days = 119): { date: string; value: 
   const map = new Map<string, number>()
   for (const d of dates) map.set(d, 0)
   for (const e of s.xpEvents) {
-    const d = new Date(e.ts).toISOString().slice(0, 10)
+    const d = iso(new Date(e.ts)) // local-day bucket (matches studyLogs/streaks)
     if (map.has(d)) map.set(d, (map.get(d) || 0) + e.amount)
   }
   return dates.map((date) => ({ date, value: map.get(date) || 0 }))

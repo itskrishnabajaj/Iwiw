@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionTitle } from '@/components/ui/primitives'
-import { monthGrid, todayISO } from '@/lib/dates'
+import { monthGrid, todayISO, iso } from '@/lib/dates'
 import { getMoodEmoji } from '@/lib/constants'
 import { format } from 'date-fns'
 
@@ -21,7 +21,7 @@ export default function Calendar() {
   const xpByDay = useMemo(() => {
     const m = new Map<string, number>()
     for (const e of s.xpEvents) {
-      const d = new Date(e.ts).toISOString().slice(0, 10)
+      const d = iso(new Date(e.ts))
       m.set(d, (m.get(d) || 0) + e.amount)
     }
     return m

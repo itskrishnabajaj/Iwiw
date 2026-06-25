@@ -5,6 +5,7 @@ import { router } from './router'
 import { AuroraBackground } from './components/ui/AuroraBackground'
 import { MouseGlow } from './components/ui/MouseGlow'
 import { LevelUpModal } from './components/celebrate/LevelUpModal'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useAppStore } from './store/useAppStore'
 import { usePrefs } from './hooks/usePrefs'
 
@@ -31,17 +32,19 @@ export default function App() {
     <>
       <AuroraBackground />
       <MouseGlow />
-      {!hydrated ? (
-        <BootScreen />
-      ) : showOnboarding ? (
-        <Suspense fallback={<BootScreen />}>
-          <Onboarding onDone={() => setJustFinished(true)} />
-        </Suspense>
-      ) : (
-        <Suspense fallback={<BootScreen />}>
-          <RouterProvider router={router} />
-        </Suspense>
-      )}
+      <ErrorBoundary label="app">
+        {!hydrated ? (
+          <BootScreen />
+        ) : showOnboarding ? (
+          <Suspense fallback={<BootScreen />}>
+            <Onboarding onDone={() => setJustFinished(true)} />
+          </Suspense>
+        ) : (
+          <Suspense fallback={<BootScreen />}>
+            <RouterProvider router={router} />
+          </Suspense>
+        )}
+      </ErrorBoundary>
       <LevelUpModal />
       <Toaster
         position="bottom-right"

@@ -59,7 +59,8 @@ export const reviewRules: Rule[] = [
         'Consistency is just discipline that stopped negotiating with itself.',
         'Build something 100 people love before something a million people kind of like.',
       ]
-      const idx = (new Date().getDate() + ctx.data.xpEvents.length) % lines.length
+      // Deterministic per calendar day — must NOT change when XP is logged mid-day.
+      const idx = new Date().getDate() % lines.length
       return {
         id: 'coach',
         kind: 'coach',

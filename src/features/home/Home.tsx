@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
 import { getLevel, todayProgress, studyStreak, todayFocusScore, activityHeatmap, predictedPercentile, weeklyXP } from '@/store/selectors'
 import { totalXP, titleForLevel } from '@/lib/xp'
-import { greeting, countdown, ageFrom } from '@/lib/dates'
+import { greeting, countdown, ageFrom, todayISO } from '@/lib/dates'
 import { quoteOfDay } from '@/data/quotes'
 import { generateInsight } from '@/lib/insights'
 import { goalProgress } from '@/lib/goals'
@@ -33,13 +33,13 @@ export default function Home() {
   const cat = countdown(s.settings.catDate)
   const cet = countdown(s.settings.cetDate)
   const weather = useWeather(s.settings.weatherLat, s.settings.weatherLon)
-  const quote = quoteOfDay(s.xpEvents.length)
+  const quote = quoteOfDay() // date-deterministic; stable as XP changes during the day
   const heat = useMemo(() => activityHeatmap(s, 119), [s.xpEvents])
   const insight = useMemo(() => generateInsight('daily', s), [s.tasks, s.xpEvents])
   const pct = predictedPercentile(s)
   const wXP = weeklyXP(s)
 
-  const gymToday = s.gym.workouts.some((w) => w.date === new Date().toISOString().slice(0, 10))
+  const gymToday = s.gym.workouts.some((w) => w.date === todayISO())
   const topGoals = s.goals.filter((g) => g.horizon === 'annual' || g.horizon === 'weekly').slice(0, 3)
 
   const [note, setNote] = useState('')

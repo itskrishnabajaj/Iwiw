@@ -6,7 +6,7 @@ import { SectionTitle, Stat, Tag } from '@/components/ui/primitives'
 import { Ring } from '@/components/ui/Ring'
 import { LineChart, BarChart, RadarChart, DoughnutChart } from '@/components/charts/Charts'
 import { useIntelligence, useProductivityScore } from '@/hooks/useIntelligence'
-import { lastNDates } from '@/lib/dates'
+import { lastNDates, iso } from '@/lib/dates'
 import { format, parseISO } from 'date-fns'
 import type { AreaKey } from '@/lib/types'
 
@@ -28,9 +28,10 @@ export default function Analytics() {
       byDay[(d.getDay() + 6) % 7] += e.amount
       byHour[d.getHours()] += e.amount
     }
+    if (s.xpEvents.length === 0) return { day: '—', hour: null as number | null }
     const topDay = byDay.indexOf(Math.max(...byDay))
     const topHour = byHour.indexOf(Math.max(...byHour))
-    return { day: WEEKDAY_NAMES[topDay], hour: topHour }
+    return { day: WEEKDAY_NAMES[topDay], hour: topHour as number | null }
   }, [s.xpEvents])
 
   // XP by area (last 14d) for doughnut
@@ -46,7 +47,7 @@ export default function Analytics() {
     const dates = lastNDates(30)
     const map = new Map(dates.map((d) => [d, 0]))
     for (const e of s.xpEvents) {
-      const d = new Date(e.ts).toISOString().slice(0, 10)
+      const d = iso(new Date(e.ts))
       if (map.has(d)) map.set(d, (map.get(d) || 0) + e.amount)
     }
     return { labels: dates.map((d) => format(parseISO(d), 'd MMM')), data: dates.map((d) => map.get(d) || 0) }
@@ -105,7 +106,7 @@ export default function Analytics() {
         <GlassCard className="p-5"><Stat label="Total study hours" value={totalHours.toFixed(0)} sub="all time" color="#7c5cff" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Avg focus score" value={`${avgFocus}%`} sub="per session" color="#34d399" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Most productive day" value={productive.day} sub="by XP earned" color="#36e6e0" /></GlassCard>
-        <GlassCard className="p-5"><Stat label="Peak hour" value={`${productive.hour}:00`} sub="when you earn most XP" color="#fbbf24" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="Peak hour" value={productive.hour === null ? '—' : `${productive.hour}:00`} sub="when you earn most XP" color="#fbbf24" /></GlassCard>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

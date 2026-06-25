@@ -43,6 +43,9 @@ class StorageService {
   private lastIntegrity: Integrity = 'empty'
   private lastRepaired: string[] = []
   private lastAutoBackup = 0
+  // Serializes all writes so rapid concurrent mutations apply in call order
+  // (prevents lost updates when a refresh interrupts an in-flight write).
+  private writeChain: Promise<void> = Promise.resolve()
 
   // ---- low-level (used by zustand adapter) -------------------------------
   private async readEnvelope(): Promise<Envelope | null> {
@@ -73,7 +76,7 @@ class StorageService {
         this.lastIntegrity = 'recovered'
         return latest.data
       }
-      this.lastIntegrity = 'recovered'
+      this.lastIntegrity = 'empty'
       return freshData()
     }
   }
@@ -220,12 +223,21 @@ class StorageService {
             this.lastIntegrity = 'recovered'
             return JSON.stringify({ state: latest.data, version: DATA_VERSION })
           }
+          this.lastIntegrity = 'empty'
           return null
         }
       },
-      setItem: async (name, value) => {
-        await this.maybeAutoBackup()
-        await set(name, value)
+      setItem: (name, value) => {
+        // Chain writes so they commit strictly in the order they were issued.
+        this.writeChain = this.writeChain
+          .then(async () => {
+            await this.maybeAutoBackup()
+            await set(name, value)
+          })
+          .catch(() => {
+            /* keep the chain alive even if one write fails */
+          })
+        return this.writeChain
       },
       removeItem: async (name) => {
         await del(name)

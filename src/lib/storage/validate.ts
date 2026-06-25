@@ -36,7 +36,17 @@ export function validateAppData(raw: unknown): { data: AppData; repaired: string
       repaired.push(k)
     } else {
       // shallow-merge defaults so newly added nested keys are always present
-      out[k] = { ...(def[k] as object), ...(v as object) }
+      const merged = { ...(def[k] as object), ...(v as object) } as Record<string, unknown>
+      // Repair nested fields whose default is an array but stored value isn't
+      // (e.g. mba.topics corrupted to null) so downstream `.map` can't crash.
+      const defObj = def[k] as Record<string, unknown>
+      for (const nk of Object.keys(defObj)) {
+        if (Array.isArray(defObj[nk]) && !Array.isArray(merged[nk])) {
+          merged[nk] = defObj[nk]
+          repaired.push(`${k}.${nk}`)
+        }
+      }
+      out[k] = merged
     }
   }
 
