@@ -18,7 +18,7 @@ export default function Focus() {
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6">
-      <AuroraBackground />
+      {prefs.animationDensity !== 'minimal' && <AuroraBackground />}
       {prefs.particles && <div className="absolute inset-0 -z-[1]"><Particles count={60} /></div>}
 
       <Link to="/" className="absolute left-6 top-6 text-sm text-white/40 transition hover:text-white">← Exit focus</Link>

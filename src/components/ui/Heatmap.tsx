@@ -33,7 +33,7 @@ export function Heatmap({ data, color = '#7c5cff', className }: Props) {
       <div className="grid grid-flow-col grid-rows-7 gap-1">
         {cells.map((c, i) =>
           c === null ? (
-            <div key={i} className="h-[11px] w-[11px]" />
+            <div key={`pad-${i}`} className="h-[11px] w-[11px]" />
           ) : (
             <div
               key={c.date}

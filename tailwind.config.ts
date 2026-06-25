@@ -48,6 +48,13 @@ export default {
         'glow-cyan': '0 0 40px -8px rgba(54,230,224,0.4)',
         card: '0 8px 40px -12px rgba(0,0,0,0.6)',
       },
+      // Use the dynamic viewport unit so mobile URL-bar show/hide doesn't jump layout.
+      height: {
+        screen: '100dvh',
+      },
+      minHeight: {
+        screen: '100dvh',
+      },
       backdropBlur: {
         xs: '2px',
       },

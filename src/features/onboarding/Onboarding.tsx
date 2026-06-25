@@ -13,7 +13,7 @@ import { bigCelebrate } from '@/components/celebrate/confetti'
 export default function Onboarding({ onDone }: { onDone: () => void }) {
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const [, setPrefs] = usePrefs()
+  const [prefs, setPrefs] = usePrefs()
 
   const [step, setStep] = useState(0)
   const [name, setName] = useState(settings.name)
@@ -92,7 +92,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-6">
-      <AuroraBackground />
+      {prefs.animationDensity !== 'minimal' && <AuroraBackground />}
       <button onClick={skip} className="absolute right-6 top-6 text-sm text-white/40 transition hover:text-white">Skip →</button>
 
       <div className="relative z-10 w-full max-w-md text-center">

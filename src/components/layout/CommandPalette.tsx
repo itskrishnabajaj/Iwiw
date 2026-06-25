@@ -17,7 +17,15 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const navigate = useNavigate()
-  const store = useAppStore()
+  // Subscribe only to the indexed slices (not the whole store) — this component is
+  // always mounted, so a whole-store subscription would re-render it on every mutation.
+  const goals = useAppStore((s) => s.goals)
+  const tasks = useAppStore((s) => s.tasks)
+  const courses = useAppStore((s) => s.courses)
+  const institutes = useAppStore((s) => s.institutes)
+  const qrItems = useAppStore((s) => s.qr.items)
+  const journal = useAppStore((s) => s.journal)
+  const notes = useAppStore((s) => s.notes)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -45,19 +53,19 @@ export function CommandPalette() {
     }
     const all: Result[] = []
     NAV.forEach((n) => all.push({ id: 'nav-' + n.to, label: n.label, hint: 'Page', icon: n.icon, action: go(n.to) }))
-    store.goals.forEach((g) => all.push({ id: g.id, label: g.title, hint: 'Goal · ' + g.horizon, icon: '◎', action: go('/goals') }))
-    store.tasks.forEach((t) => all.push({ id: t.id, label: t.title, hint: 'Task', icon: '☉', action: go('/today') }))
-    store.courses.forEach((c) => all.push({ id: c.id, label: c.title, hint: 'Course · ' + c.source, icon: '📚', action: go('/learning') }))
-    store.institutes.forEach((i) => all.push({ id: i.id, label: i.name, hint: 'Coaching · ' + i.location, icon: '🤝', action: go('/crm') }))
-    store.qr.items.forEach((i) => all.push({ id: i.id, label: i.title, hint: 'QuantReflex · ' + i.type, icon: '⚡', action: go('/quantreflex') }))
-    store.journal.forEach((j) => all.push({ id: j.id, label: j.wentWell || 'Journal entry', hint: 'Journal · ' + j.date, icon: '✍', action: go('/journal') }))
-    store.notes.forEach((n) => all.push({ id: n.id, label: n.text, hint: 'Note', icon: '🗒', action: go('/') }))
+    goals.forEach((g) => all.push({ id: g.id, label: g.title, hint: 'Goal · ' + g.horizon, icon: '◎', action: go('/goals') }))
+    tasks.forEach((t) => all.push({ id: t.id, label: t.title, hint: 'Task', icon: '☉', action: go('/today') }))
+    courses.forEach((c) => all.push({ id: c.id, label: c.title, hint: 'Course · ' + c.source, icon: '📚', action: go('/learning') }))
+    institutes.forEach((i) => all.push({ id: i.id, label: i.name, hint: 'Coaching · ' + i.location, icon: '🤝', action: go('/crm') }))
+    qrItems.forEach((i) => all.push({ id: i.id, label: i.title, hint: 'QuantReflex · ' + i.type, icon: '⚡', action: go('/quantreflex') }))
+    journal.forEach((j) => all.push({ id: j.id, label: j.wentWell || 'Journal entry', hint: 'Journal · ' + j.date, icon: '✍', action: go('/journal') }))
+    notes.forEach((n) => all.push({ id: n.id, label: n.text, hint: 'Note', icon: '🗒', action: go('/') }))
     ACHIEVEMENTS.forEach((a) => all.push({ id: a.id, label: a.title, hint: 'Achievement', icon: a.icon, action: go('/achievements') }))
 
     if (!q.trim()) return all.filter((r) => r.hint === 'Page')
     const ql = q.toLowerCase()
     return all.filter((r) => r.label.toLowerCase().includes(ql) || r.hint.toLowerCase().includes(ql)).slice(0, 24)
-  }, [q, store, navigate, open])
+  }, [q, open, navigate, goals, tasks, courses, institutes, qrItems, journal, notes])
 
   return (
     <AnimatePresence>

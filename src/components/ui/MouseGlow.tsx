@@ -5,6 +5,9 @@ export function MouseGlow() {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    // Touch/coarse pointers can't benefit from a cursor glow — skip the rAF loop
+    // entirely so it never causes background repaints on phones/tablets.
+    if (window.matchMedia('(pointer: coarse)').matches) return
     let raf = 0
     let tx = 0
     let ty = 0

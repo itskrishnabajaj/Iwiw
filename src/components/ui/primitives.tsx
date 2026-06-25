@@ -1,4 +1,4 @@
-import { type ReactNode, type InputHTMLAttributes } from 'react'
+import { useId, type ReactNode, type InputHTMLAttributes } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/cn'
 
@@ -76,6 +76,7 @@ export function Select({ className, children, ...rest }: React.SelectHTMLAttribu
 }
 
 export function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { label: string; value: T }[] }) {
+  const segId = useId() // unique per instance so multiple Segmenteds never share a layoutId
   return (
     <div className="inline-flex rounded-xl border border-white/10 bg-white/[0.03] p-1">
       {options.map((o) => (
@@ -85,7 +86,7 @@ export function Segmented<T extends string>({ value, onChange, options }: { valu
           className="relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
         >
           {value === o.value && (
-            <motion.div layoutId="seg" className="absolute inset-0 rounded-lg bg-accent/90 shadow-glow" transition={{ type: 'spring', stiffness: 350, damping: 30 }} />
+            <motion.div layoutId={`seg-${segId}`} className="absolute inset-0 rounded-lg bg-accent/90 shadow-glow" transition={{ type: 'spring', stiffness: 350, damping: 30 }} />
           )}
           <span className={cn('relative z-10', value === o.value ? 'text-white' : 'text-white/50')}>{o.label}</span>
         </button>

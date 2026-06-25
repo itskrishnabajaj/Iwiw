@@ -5,7 +5,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { levelFromXP, titleForLevel, totalXP } from '@/lib/xp'
 import { cn } from '@/lib/cn'
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function Sidebar({ onNavigate, scope = 'desktop' }: { onNavigate?: () => void; scope?: string }) {
   const name = useAppStore((s) => s.settings.name)
   // Select a primitive (total XP) — never an object — to avoid render loops.
   const xp = useAppStore((s) => totalXP(s.xpEvents))
@@ -56,7 +56,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                   {({ isActive }) => (
                     <>
                       {isActive && (
-                        <motion.div layoutId="navActive" className="absolute inset-0 rounded-xl bg-white/[0.07] ring-1 ring-white/10" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />
+                        <motion.div layoutId={`navActive-${scope}`} className="absolute inset-0 rounded-xl bg-white/[0.07] ring-1 ring-white/10" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />
                       )}
                       <span className="relative z-10 w-5 text-center text-base opacity-90">{item.icon}</span>
                       <span className="relative z-10 font-medium">{item.label}</span>

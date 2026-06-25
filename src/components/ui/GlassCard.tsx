@@ -13,8 +13,10 @@ interface Props {
   hoverable?: boolean
 }
 
-// Glassmorphism card with optional 3D tilt-on-hover and entrance animation.
-export function GlassCard({ children, className, tilt = false, glow, onClick, delay = 0, hoverable = true }: Props) {
+// Glassmorphism card with optional 3D tilt-on-hover. No mount/entrance animation —
+// cards render instantly so navigating between pages never replays a fade cascade.
+// `delay` is accepted for call-site compatibility but intentionally unused.
+export function GlassCard({ children, className, tilt = false, glow, onClick, hoverable = true }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
   const tiltOn = tilt && !reduce
@@ -40,12 +42,10 @@ export function GlassCard({ children, className, tilt = false, glow, onClick, de
       onPointerMove={onMove}
       onPointerLeave={onLeave}
       onClick={onClick}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+      initial={false}
       style={tiltOn ? { rotateX: rx, rotateY: ry, transformPerspective: 1000 } : undefined}
       whileHover={hoverable ? { y: -3 } : undefined}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
       className={cn(
         'glass rounded-2xl shadow-card relative',
         hoverable && 'glass-hover',

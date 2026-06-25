@@ -30,8 +30,8 @@ export default function App() {
 
   return (
     <>
-      <AuroraBackground />
-      <MouseGlow />
+      {prefs.animationDensity !== 'minimal' && <AuroraBackground />}
+      {prefs.animationDensity === 'full' && !prefs.reduceMotion && <MouseGlow />}
       <ErrorBoundary label="app">
         {!hydrated ? (
           <BootScreen />

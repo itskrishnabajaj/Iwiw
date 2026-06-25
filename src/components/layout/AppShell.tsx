@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
@@ -22,7 +22,7 @@ export function AppShell() {
           <>
             <motion.div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} />
             <motion.div className="fixed inset-y-0 left-0 z-50 glass lg:hidden" initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
-              <Sidebar onNavigate={() => setMobileOpen(false)} />
+              <Sidebar scope="mobile" onNavigate={() => setMobileOpen(false)} />
             </motion.div>
           </>
         )}
@@ -30,7 +30,7 @@ export function AppShell() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 md:px-8 md:py-4">
+        <header className="safe-top flex shrink-0 items-center justify-between gap-3 px-4 py-3 md:px-8 md:py-4">
           <div className="flex items-center gap-3">
             <button onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-white/60 hover:bg-white/5 lg:hidden" aria-label="Menu">
               ☰
@@ -48,22 +48,23 @@ export function AppShell() {
           </button>
         </header>
 
-        {/* Routed content */}
+        {/* Routed content. Suspense lives HERE (not at the app root) so a lazy
+            route chunk only suspends the content area — the shell never unmounts,
+            so navigation can't flash a full-screen spinner. */}
         <main className="flex-1 overflow-y-auto px-4 pb-16 md:px-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              className="mx-auto max-w-7xl"
-            >
-              <ErrorBoundary label={location.pathname.replace('/', '') || 'home'}>
+          <Suspense fallback={<div className="min-h-[40vh]" />}>
+            <ErrorBoundary key={location.pathname} label={location.pathname.replace('/', '') || 'home'}>
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.12, ease: 'easeOut' }}
+                className="mx-auto max-w-7xl"
+              >
                 <Outlet />
-              </ErrorBoundary>
-            </motion.div>
-          </AnimatePresence>
+              </motion.div>
+            </ErrorBoundary>
+          </Suspense>
         </main>
       </div>
     </div>
