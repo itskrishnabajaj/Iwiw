@@ -22,6 +22,7 @@ const Calendar = lazy(() => import('./features/calendar/Calendar'))
 const Vision = lazy(() => import('./features/vision/Vision'))
 const Achievements = lazy(() => import('./features/achievements/Achievements'))
 const Focus = lazy(() => import('./features/focus/Focus'))
+const Settings = lazy(() => import('./features/settings/Settings'))
 
 function Root() {
   useAppEffects()
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
       { path: 'calendar', element: <Calendar /> },
       { path: 'vision', element: <Vision /> },
       { path: 'achievements', element: <Achievements /> },
+      { path: 'settings', element: <Settings /> },
     ],
   },
   { path: '/focus', element: <Focus /> },

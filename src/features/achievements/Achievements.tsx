@@ -35,6 +35,9 @@ export default function Achievements() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((a, i) => {
           const color = TIER_COLOR[a.tier]
+          const masked = a.hidden && !a.unlocked
+          const title = masked ? 'Hidden achievement' : a.title
+          const description = masked ? 'Keep playing to discover how to unlock this.' : a.description
           return (
             <motion.div key={a.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.02 }}>
               <GlassCard className={`p-5 ${a.unlocked ? '' : 'opacity-70'}`} glow={a.unlocked ? color : undefined}>
@@ -44,13 +47,14 @@ export default function Achievements() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold">{a.title}</span>
+                      <span className="font-semibold">{title}</span>
                       <span className="text-[10px] uppercase tracking-wider" style={{ color }}>{a.tier}</span>
+                      {a.hidden && <span className="text-[10px] text-white/30">hidden</span>}
                     </div>
-                    <p className="mt-0.5 text-xs text-white/45">{a.description}</p>
+                    <p className="mt-0.5 text-xs text-white/45">{description}</p>
                   </div>
                 </div>
-                {!a.unlocked && (
+                {!a.unlocked && !masked && (
                   <div className="mt-4">
                     <Progress value={a.progress} color={color} height={5} />
                     <div className="mt-1 text-right text-[11px] text-white/35">{a.progress}%</div>

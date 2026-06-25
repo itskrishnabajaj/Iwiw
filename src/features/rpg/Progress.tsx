@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
-import { getLevel, AREA_META } from '@/store/selectors'
-import { totalXP, titleForLevel, skillLevel } from '@/lib/xp'
+import { getLevel, AREA_META, weeklyXP, monthlyXP } from '@/store/selectors'
+import { totalXP, titleForLevel, skillLevel, rankForLevel } from '@/lib/xp'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Progress } from '@/components/ui/Progress'
 import { Ring } from '@/components/ui/Ring'
@@ -16,6 +16,9 @@ export default function ProgressPage() {
   const achievements = useMemo(() => evaluateAchievements(s), [s])
   const unlocked = achievements.filter((a) => a.unlocked)
   const sortedSkills = [...s.skills].sort((a, b) => b.xp - a.xp)
+  const rank = rankForLevel(overall.level)
+  const wXP = weeklyXP(s)
+  const mXP = monthlyXP(s)
 
   return (
     <div className="space-y-6 pt-2">
@@ -31,15 +34,25 @@ export default function ProgressPage() {
             </div>
           </Ring>
           <div>
-            <Tag>{titleForLevel(overall.level)}</Tag>
+            <div className="flex items-center gap-2">
+              <Tag color={rank.rank.color}>{rank.rank.icon} {rank.rank.name}</Tag>
+              <Tag>{titleForLevel(overall.level)}</Tag>
+            </div>
             <div className="mt-2 text-3xl font-black"><CountUp value={totalXP(s.xpEvents)} suffix=" XP" /></div>
             <div className="mt-1 text-sm text-white/40">{overall.into} / {overall.needed} to next level</div>
+            {rank.next && (
+              <div className="mt-2 w-44">
+                <div className="mb-1 flex justify-between text-[10px] text-white/35"><span>{rank.rank.name}</span><span>{rank.next.name}</span></div>
+                <Progress value={rank.pct} color={rank.rank.color} height={5} />
+              </div>
+            )}
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4 text-center md:gap-8">
+        <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4 md:gap-6">
           <div><div className="text-2xl font-bold text-accent-soft">{unlocked.length}</div><div className="text-xs text-white/40">Achievements</div></div>
           <div><div className="text-2xl font-bold text-accent-cyan">{s.skills.length}</div><div className="text-xs text-white/40">Skills</div></div>
-          <div><div className="text-2xl font-bold text-warn">{s.xpEvents.length}</div><div className="text-xs text-white/40">XP events</div></div>
+          <div><div className="text-2xl font-bold text-good"><CountUp value={wXP} /></div><div className="text-xs text-white/40">XP this week</div></div>
+          <div><div className="text-2xl font-bold text-warn"><CountUp value={mXP} /></div><div className="text-xs text-white/40">XP this month</div></div>
         </div>
       </GlassCard>
 

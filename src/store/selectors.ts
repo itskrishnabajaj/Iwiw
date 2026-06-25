@@ -77,6 +77,11 @@ export function weeklyXP(s: AppData): number {
   return s.xpEvents.filter((e) => e.ts >= cutoff).reduce((a, e) => a + e.amount, 0)
 }
 
+export function monthlyXP(s: AppData): number {
+  const cutoff = Date.now() - 30 * 86400000
+  return s.xpEvents.filter((e) => e.ts >= cutoff).reduce((a, e) => a + e.amount, 0)
+}
+
 export function runwayMonths(s: AppData): number {
   return Math.round(s.finance.savings / Math.max(1, s.finance.monthlyBurn))
 }

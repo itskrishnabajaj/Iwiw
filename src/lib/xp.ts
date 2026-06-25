@@ -44,3 +44,28 @@ export function titleForLevel(level: number): string {
   for (const x of TITLES) if (level >= x.min) t = x.title
   return t
 }
+
+// Prestige ranks layered on top of levels — a longer progression arc.
+export interface Rank {
+  min: number
+  name: string
+  color: string
+  icon: string
+}
+export const RANKS: Rank[] = [
+  { min: 0, name: 'Bronze', color: '#c08457', icon: '🥉' },
+  { min: 8, name: 'Silver', color: '#c9d1d9', icon: '🥈' },
+  { min: 16, name: 'Gold', color: '#f5c451', icon: '🥇' },
+  { min: 26, name: 'Platinum', color: '#7c5cff', icon: '💎' },
+  { min: 38, name: 'Diamond', color: '#36e6e0', icon: '🔷' },
+  { min: 52, name: 'Legend', color: '#f472b6', icon: '👑' },
+]
+
+export function rankForLevel(level: number): { rank: Rank; next: Rank | null; pct: number } {
+  let idx = 0
+  for (let i = 0; i < RANKS.length; i++) if (level >= RANKS[i].min) idx = i
+  const rank = RANKS[idx]
+  const next = RANKS[idx + 1] ?? null
+  const pct = next ? Math.round(((level - rank.min) / (next.min - rank.min)) * 100) : 100
+  return { rank, next, pct }
+}

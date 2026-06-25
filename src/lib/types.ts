@@ -303,12 +303,15 @@ export interface DayLog {
 // ---------------------------------------------------------------------------
 // Achievements
 // ---------------------------------------------------------------------------
+export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'legendary'
+
 export interface Achievement {
   id: string
   title: string
   description: string
   icon: string
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum'
+  tier: AchievementTier
+  hidden?: boolean // masked until unlocked
   // predicate evaluated against AppState snapshot
   check: (s: AppData) => { unlocked: boolean; progress: number }
 }

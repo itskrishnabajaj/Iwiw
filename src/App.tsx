@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { router } from './router'
@@ -6,6 +6,9 @@ import { AuroraBackground } from './components/ui/AuroraBackground'
 import { MouseGlow } from './components/ui/MouseGlow'
 import { LevelUpModal } from './components/celebrate/LevelUpModal'
 import { useAppStore } from './store/useAppStore'
+import { usePrefs } from './hooks/usePrefs'
+
+const Onboarding = lazy(() => import('./features/onboarding/Onboarding'))
 
 function BootScreen() {
   return (
@@ -20,6 +23,9 @@ function BootScreen() {
 
 export default function App() {
   const hydrated = useAppStore((s) => s.hydrated)
+  const [prefs] = usePrefs()
+  const [justFinished, setJustFinished] = useState(false)
+  const showOnboarding = hydrated && !prefs.onboarded && !justFinished
 
   return (
     <>
@@ -27,6 +33,10 @@ export default function App() {
       <MouseGlow />
       {!hydrated ? (
         <BootScreen />
+      ) : showOnboarding ? (
+        <Suspense fallback={<BootScreen />}>
+          <Onboarding onDone={() => setJustFinished(true)} />
+        </Suspense>
       ) : (
         <Suspense fallback={<BootScreen />}>
           <RouterProvider router={router} />

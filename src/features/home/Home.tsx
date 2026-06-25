@@ -18,10 +18,12 @@ import { PomodoroWidget } from '@/components/widgets/PomodoroWidget'
 import { Tag } from '@/components/ui/primitives'
 import { useWeather } from '@/hooks/useWeather'
 import { useTick } from '@/hooks/useTick'
+import { usePrefs } from '@/hooks/usePrefs'
 import { AREA_META } from '@/store/selectors'
 
 export default function Home() {
   useTick(1000 * 30)
+  const [prefs] = usePrefs()
   const s = useAppStore()
   const lvl = getLevel(s)
   const tp = todayProgress(s)
@@ -46,10 +48,10 @@ export default function Home() {
     <div className="space-y-6 pt-2">
       {/* HERO */}
       <GlassCard hoverable={false} className="relative overflow-hidden p-6 md:p-10">
-        <Particles count={36} />
+        {prefs.particles && <Particles count={36} />}
         <div className="relative z-10">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="text-sm font-medium uppercase tracking-[0.25em] text-accent-soft">{greeting()}</div>
+            <div className="text-sm font-medium uppercase tracking-[0.25em] text-accent-soft">{prefs.seasonalGreeting ? greeting() : 'Welcome back'}</div>
             <h1 className="mt-2 text-4xl font-black tracking-tight md:text-6xl">
               <span className="text-gradient">{s.settings.name}</span> — today matters.
             </h1>

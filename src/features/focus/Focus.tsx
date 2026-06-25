@@ -4,12 +4,14 @@ import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
 import { todaysTasks } from '@/store/selectors'
 import { usePomodoro } from '@/hooks/usePomodoro'
+import { usePrefs } from '@/hooks/usePrefs'
 import { AuroraBackground } from '@/components/ui/AuroraBackground'
 import { Particles } from '@/components/ui/Particles'
 import { Ring } from '@/components/ui/Ring'
 
 export default function Focus() {
   const s = useAppStore()
+  const [prefs] = usePrefs()
   const p = usePomodoro(50, 10)
   const tasks = todaysTasks(s).filter((t) => !t.done && t.priority)
   const [active, setActive] = useState(tasks[0]?.title ?? 'Deep work')
@@ -17,7 +19,7 @@ export default function Focus() {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6">
       <AuroraBackground />
-      <div className="absolute inset-0 -z-[1]"><Particles count={60} /></div>
+      {prefs.particles && <div className="absolute inset-0 -z-[1]"><Particles count={60} /></div>}
 
       <Link to="/" className="absolute left-6 top-6 text-sm text-white/40 transition hover:text-white">← Exit focus</Link>
 

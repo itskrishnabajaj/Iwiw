@@ -27,6 +27,16 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'a_journal7', title: 'Reflective Mind', description: 'Journal 7 times.', icon: '✍️', tier: 'bronze', check: (s) => { const n = s.journal.length; return { unlocked: n >= 7, progress: clamp((n / 7) * 100) } } },
   { id: 'a_pyq1k', title: '1,000 PYQs', description: 'Solve 1,000 previous-year questions.', icon: '🧩', tier: 'gold', check: (s) => ({ unlocked: s.mba.pyqsSolved >= 1000, progress: clamp((s.mba.pyqsSolved / 1000) * 100) }) },
   { id: 'a_qbank5k', title: '5,000 Questions', description: 'Solve 5,000 questions from the bank.', icon: '🏅', tier: 'platinum', check: (s) => ({ unlocked: s.mba.questionBankSolved >= 5000, progress: clamp((s.mba.questionBankSolved / 5000) * 100) }) },
+
+  // Legendary tier — the apex milestones.
+  { id: 'a_level40', title: 'Level 40 Ascendant', description: 'Reach overall level 40.', icon: '🌟', tier: 'legendary', check: (s) => { const lvl = levelFromXP(totalXP(s.xpEvents)).level; return { unlocked: lvl >= 40, progress: clamp((lvl / 40) * 100) } } },
+  { id: 'a_xp250k', title: 'Quarter-Million', description: 'Bank 250,000 lifetime XP.', icon: '💠', tier: 'legendary', check: (s) => { const xp = totalXP(s.xpEvents); return { unlocked: xp >= 250000, progress: clamp((xp / 250000) * 100) } } },
+
+  // Hidden achievements — masked until earned.
+  { id: 'a_nightowl', title: 'Night Owl', description: 'Earn XP after midnight.', icon: '🦉', tier: 'silver', hidden: true, check: (s) => { const hit = s.xpEvents.some((e) => { const h = new Date(e.ts).getHours(); return h >= 0 && h < 4 }); return { unlocked: hit, progress: hit ? 100 : 0 } } },
+  { id: 'a_earlybird', title: 'Early Bird', description: 'Earn XP before 6 AM.', icon: '🌄', tier: 'silver', hidden: true, check: (s) => { const hit = s.xpEvents.some((e) => new Date(e.ts).getHours() < 6); return { unlocked: hit, progress: hit ? 100 : 0 } } },
+  { id: 'a_polymath', title: 'Polymath', description: 'Earn XP in all seven life areas.', icon: '🧬', tier: 'gold', hidden: true, check: (s) => { const areas = new Set(s.xpEvents.map((e) => e.area)); return { unlocked: areas.size >= 7, progress: clamp((areas.size / 7) * 100) } } },
+  { id: 'a_renaissance', title: 'Renaissance Soul', description: 'Reach level 5+ in every skill.', icon: '🎭', tier: 'legendary', hidden: true, check: (s) => { const all = s.skills.length > 0 && s.skills.every((sk) => levelFromXP(sk.xp).level >= 5); const minLvl = s.skills.length ? Math.min(...s.skills.map((sk) => levelFromXP(sk.xp).level)) : 0; return { unlocked: all, progress: clamp((minLvl / 5) * 100) } } },
 ]
 
 export const TIER_COLOR: Record<Achievement['tier'], string> = {
@@ -34,6 +44,7 @@ export const TIER_COLOR: Record<Achievement['tier'], string> = {
   silver: '#c9d1d9',
   gold: '#f5c451',
   platinum: '#7c5cff',
+  legendary: '#f472b6',
 }
 
 export function evaluateAchievements(s: AppData) {
