@@ -61,6 +61,20 @@ export function Textarea({ className, ...rest }: React.TextareaHTMLAttributes<HT
   )
 }
 
+export function Select({ className, children, ...rest }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      className={cn(
+        'w-full rounded-xl border border-white/10 bg-base-700 px-3.5 py-2.5 text-sm outline-none transition focus:border-accent/60',
+        className,
+      )}
+      {...rest}
+    >
+      {children}
+    </select>
+  )
+}
+
 export function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { label: string; value: T }[] }) {
   return (
     <div className="inline-flex rounded-xl border border-white/10 bg-white/[0.03] p-1">

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { idbStorage } from '@/lib/persistence'
+import { storage as storageService } from '@/lib/storage/StorageService'
 import { freshData, DATA_VERSION } from '@/lib/seed'
 import { todayISO } from '@/lib/dates'
 import type {
@@ -250,13 +250,12 @@ export const useAppStore = create<AppStore>()(
     {
       name: 'personal-os-v1',
       version: DATA_VERSION,
-      storage: createJSONStorage(() => idbStorage),
+      // All persistence flows through StorageService: validation, migration,
+      // backup snapshots and corruption recovery happen inside the adapter.
+      storage: createJSONStorage(() => storageService.createZustandStorage()),
       partialize: (s) => {
         // exclude transient UI flags from persistence
-        const { hydrated, pendingLevelUp, newlyUnlocked, ...rest } = s
-        void hydrated
-        void pendingLevelUp
-        void newlyUnlocked
+        const { hydrated: _h, pendingLevelUp: _p, newlyUnlocked: _n, ...rest } = s
         return rest
       },
       onRehydrateStorage: () => () => {

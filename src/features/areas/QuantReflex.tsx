@@ -37,7 +37,7 @@ export default function QuantReflex() {
       </div>
 
       {/* Board */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {COLUMNS.map((col) => {
           const items = s.qr.items.filter((i) => i.status === col.key)
           return (
@@ -51,13 +51,13 @@ export default function QuantReflex() {
                   <motion.div key={i.id} layout className="group rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-sm">{TYPE_EMOJI[i.type]} {i.title}</span>
-                      <button onClick={() => s.deleteQRItem(i.id)} className="text-white/20 opacity-0 transition group-hover:opacity-100 hover:text-bad">×</button>
+                      <button onClick={() => s.deleteQRItem(i.id)} aria-label={`Delete ${i.title}`} className="px-1 text-base leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       <Tag color={col.color}>{i.type}</Tag>
                       <div className="flex gap-1">
                         {COLUMNS.filter((c) => c.key !== i.status).map((c) => (
-                          <button key={c.key} onClick={() => s.moveQRItem(i.id, c.key)} title={`Move to ${c.label}`} className="h-5 w-5 rounded text-[10px] text-white/40 hover:bg-white/10" style={{ color: c.color }}>
+                          <button key={c.key} onClick={() => s.moveQRItem(i.id, c.key)} aria-label={`Move "${i.title}" to ${c.label}`} title={`Move to ${c.label}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-xs hover:bg-white/10" style={{ color: c.color }}>
                             {c.key === 'done' ? '✓' : '→'}
                           </button>
                         ))}
@@ -104,7 +104,7 @@ export default function QuantReflex() {
                   <Progress value={(done / items.length) * 100} className="mb-3" height={5} />
                   <div className="space-y-1.5">
                     {items.map((c) => (
-                      <button key={c.id} onClick={() => s.toggleChecklist(c.id)} className="flex w-full items-center gap-2.5 text-left text-sm">
+                      <button key={c.id} onClick={() => s.toggleChecklist(c.id)} role="checkbox" aria-checked={c.done} aria-label={c.label} className="flex w-full items-center gap-2.5 py-0.5 text-left text-sm">
                         <span className="flex h-4 w-4 items-center justify-center rounded border-2 text-[10px]" style={{ borderColor: c.done ? '#34d399' : 'rgba(255,255,255,0.2)', background: c.done ? '#34d399' : 'transparent', color: '#07080d' }}>{c.done && '✓'}</span>
                         <span className={c.done ? 'text-white/40 line-through' : 'text-white/70'}>{c.label}</span>
                       </button>

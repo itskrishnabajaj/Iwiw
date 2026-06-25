@@ -86,7 +86,10 @@ export default function Today() {
                       >
                         <button
                           onClick={() => s.toggleTask(t.id)}
-                          className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors"
+                          role="checkbox"
+                          aria-checked={t.done}
+                          aria-label={`${t.done ? 'Completed' : 'Mark done'}: ${t.title}`}
+                          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors"
                           style={{ borderColor: t.done ? meta.color : 'rgba(255,255,255,0.2)', background: t.done ? meta.color : 'transparent' }}
                         >
                           {t.done && (
@@ -104,7 +107,7 @@ export default function Today() {
                           </div>
                         </div>
                         <span className="text-[11px] font-semibold text-accent-soft">+{t.xp}</span>
-                        <button onClick={() => s.deleteTask(t.id)} className="text-white/20 opacity-0 transition group-hover:opacity-100 hover:text-bad">×</button>
+                        <button onClick={() => s.deleteTask(t.id)} aria-label={`Delete ${t.title}`} className="px-1 text-base leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
                       </motion.div>
                     )
                   })}

@@ -37,6 +37,8 @@ export function CommandPalette() {
   }, [open])
 
   const results = useMemo<Result[]>(() => {
+    // Don't build the (large) index while the palette is closed.
+    if (!open) return []
     const go = (to: string) => () => {
       navigate(to)
       setOpen(false)
@@ -55,7 +57,7 @@ export function CommandPalette() {
     if (!q.trim()) return all.filter((r) => r.hint === 'Page')
     const ql = q.toLowerCase()
     return all.filter((r) => r.label.toLowerCase().includes(ql) || r.hint.toLowerCase().includes(ql)).slice(0, 24)
-  }, [q, store, navigate])
+  }, [q, store, navigate, open])
 
   return (
     <AnimatePresence>

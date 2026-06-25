@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { GlassCard } from '@/components/ui/GlassCard'
-import { SectionTitle, Textarea, Input } from '@/components/ui/primitives'
+import { SectionTitle, Textarea, Input, EmptyState } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
+import { getMoodEmoji, MOOD_LABELS } from '@/lib/constants'
 import { format, parseISO } from 'date-fns'
 
 const PROMPTS = [
@@ -46,8 +47,8 @@ export default function Journal() {
             </div>
           ))}
           <div>
-            <div className="mb-1.5 text-sm text-white/60">😊 Mood: {'😴😐🙂😀🤩'[form.mood - 1]}</div>
-            <input type="range" min={1} max={5} value={form.mood} onChange={(e) => set('mood', +e.target.value)} className="w-full accent-accent" />
+            <div className="mb-1.5 text-sm text-white/60">{getMoodEmoji(form.mood)} Mood: {MOOD_LABELS[form.mood - 1]}</div>
+            <input type="range" min={1} max={5} value={form.mood} onChange={(e) => set('mood', +e.target.value)} aria-label="Mood" className="w-full accent-accent" />
           </div>
         </div>
         <div className="mt-4 flex justify-end">
@@ -65,7 +66,7 @@ export default function Journal() {
           <GlassCard key={e.id} className="p-5">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-semibold text-accent-soft">{format(parseISO(e.date), 'EEEE, d MMM yyyy')}</span>
-              <span className="text-lg">{'😴😐🙂😀🤩'[e.mood - 1]}</span>
+              <span className="text-lg">{getMoodEmoji(e.mood)}</span>
             </div>
             <div className="space-y-2 text-sm">
               {e.wentWell && <p><span className="text-good">✅ </span><span className="text-white/70">{e.wentWell}</span></p>}
@@ -76,7 +77,11 @@ export default function Journal() {
             </div>
           </GlassCard>
         ))}
-        {filtered.length === 0 && <div className="text-sm text-white/35">No entries match “{query}”.</div>}
+        {filtered.length === 0 && (
+          <div className="md:col-span-2">
+            <EmptyState icon="📓" title={query ? `No entries match “${query}”` : 'Your journal is empty'} hint={query ? 'Try a different search.' : 'Write your first reflection above.'} />
+          </div>
+        )}
       </div>
     </div>
   )

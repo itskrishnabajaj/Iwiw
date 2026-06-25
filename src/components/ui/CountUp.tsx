@@ -22,6 +22,10 @@ export function CountUp({ value, decimals = 0, duration = 1200, prefix = '', suf
       (entries) => {
         if (entries[0].isIntersecting && !started.current) {
           started.current = true
+          if (!Number.isFinite(value)) {
+            setDisplay(0)
+            return
+          }
           const start = performance.now()
           const tick = (now: number) => {
             const p = Math.min(1, (now - start) / duration)

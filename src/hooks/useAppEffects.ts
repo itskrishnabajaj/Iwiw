@@ -30,25 +30,25 @@ export function useAppEffects() {
   useEffect(() => {
     if (!hydrated) return
     const s = useAppStore.getState()
-    const unlocked = evaluateAchievements(s).filter((a) => a.unlocked).map((a) => a.id)
+    const list = evaluateAchievements(s)
+    const unlocked = list.filter((a) => a.unlocked).map((a) => a.id)
     const fresh = unlocked.filter((id) => !s.unlockedAchievements[id])
     // On the first run after hydration, silently record already-earned ones.
     if (firstAchvRun.current) {
       firstAchvRun.current = false
-      if (unlocked.length) useAppStore.getState().markUnlocked(unlocked)
-      useAppStore.getState().clearUnlockToast()
+      if (unlocked.length) s.markUnlocked(unlocked)
+      s.clearUnlockToast()
       return
     }
     if (fresh.length) {
-      useAppStore.getState().markUnlocked(unlocked)
-      const list = evaluateAchievements(s)
+      s.markUnlocked(unlocked)
       for (const id of fresh) {
         const a = list.find((x) => x.id === id)!
         toast(`${a.icon}  Achievement unlocked: ${a.title}`, { icon: '🏆', duration: 4000 })
       }
       celebrate()
     } else if (unlocked.length) {
-      useAppStore.getState().markUnlocked(unlocked)
+      s.markUnlocked(unlocked)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xpEvents, hydrated])

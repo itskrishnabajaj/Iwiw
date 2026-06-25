@@ -32,11 +32,11 @@ export default function CRM() {
         <GlassCard className="p-5"><Stat label="Avg. probability" value={`${avgProb}%`} color="#fbbf24" /></GlassCard>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4">
         {STAGES.map((stage) => {
           const items = s.institutes.filter((i) => i.stage === stage.key)
           return (
-            <div key={stage.key} className="w-72 shrink-0 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <div key={stage.key} className="w-[82vw] shrink-0 snap-start rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 sm:w-72">
               <div className="mb-3 flex items-center justify-between px-1">
                 <span className="text-sm font-semibold" style={{ color: stage.color }}>{stage.label}</span>
                 <span className="text-xs text-white/30">{items.length}</span>
@@ -67,7 +67,7 @@ function InstituteCard({ inst, color }: { inst: Institute; color: string }) {
           <div className="text-sm font-semibold">{inst.name}</div>
           <div className="text-[11px] text-white/40">📍 {inst.location}</div>
         </div>
-        <button onClick={() => s.deleteInstitute(inst.id)} className="text-white/20 opacity-0 transition group-hover:opacity-100 hover:text-bad">×</button>
+        <button onClick={() => s.deleteInstitute(inst.id)} aria-label={`Delete ${inst.name}`} className="px-1 text-base leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
       </div>
       <div className="mt-2 space-y-0.5 text-[11px] text-white/45">
         <div>👤 {inst.contact}</div>

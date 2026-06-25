@@ -4,10 +4,10 @@ import { useAppStore } from '@/store/useAppStore'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionTitle } from '@/components/ui/primitives'
 import { monthGrid, todayISO } from '@/lib/dates'
+import { getMoodEmoji } from '@/lib/constants'
 import { format } from 'date-fns'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const MOOD = ['😴', '😐', '🙂', '😀', '🤩']
 
 export default function Calendar() {
   const s = useAppStore()
@@ -43,8 +43,8 @@ export default function Calendar() {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">{format(new Date(year, month), 'MMMM yyyy')}</h2>
             <div className="flex gap-2">
-              <button onClick={prev} className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10">‹</button>
-              <button onClick={next} className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10">›</button>
+              <button onClick={prev} aria-label="Previous month" className="h-10 w-10 rounded-lg bg-white/5 hover:bg-white/10">‹</button>
+              <button onClick={next} aria-label="Next month" className="h-10 w-10 rounded-lg bg-white/5 hover:bg-white/10">›</button>
             </div>
           </div>
           <div className="grid grid-cols-7 gap-1.5">
@@ -65,7 +65,7 @@ export default function Calendar() {
                   style={{ background: xp > 0 && !isToday ? `rgba(124,92,255,${0.08 + intensity * 0.3})` : undefined }}
                 >
                   <span className={`font-medium ${isToday ? 'text-accent-soft' : 'text-white/60'}`}>{+c.slice(8)}</span>
-                  {log && <span className="absolute bottom-1 right-1 text-[10px]">{MOOD[log.mood - 1]}</span>}
+                  {log && <span className="absolute bottom-1 right-1 text-[10px]">{getMoodEmoji(log.mood)}</span>}
                 </motion.button>
               )
             })}
@@ -78,7 +78,7 @@ export default function Calendar() {
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-white/[0.03] p-3"><div className="text-[11px] text-white/40">XP earned</div><div className="text-xl font-bold text-accent-soft">{selXP}</div></div>
-            <div className="rounded-xl bg-white/[0.03] p-3"><div className="text-[11px] text-white/40">Mood</div><div className="text-xl">{selLog ? MOOD[selLog.mood - 1] : '—'}</div></div>
+            <div className="rounded-xl bg-white/[0.03] p-3"><div className="text-[11px] text-white/40">Mood</div><div className="text-xl">{selLog ? getMoodEmoji(selLog.mood) : '—'}</div></div>
             <div className="rounded-xl bg-white/[0.03] p-3"><div className="text-[11px] text-white/40">Productivity</div><div className="text-xl font-bold text-good">{selLog ? `${selLog.productivity}%` : '—'}</div></div>
             <div className="rounded-xl bg-white/[0.03] p-3"><div className="text-[11px] text-white/40">Tasks</div><div className="text-xl font-bold">{selTasks.length}</div></div>
           </div>

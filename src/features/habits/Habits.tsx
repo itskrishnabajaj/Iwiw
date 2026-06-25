@@ -6,7 +6,7 @@ import { currentStreak, bestStreak, successRate, consistencyScore } from '@/lib/
 import { lastNDates, todayISO } from '@/lib/dates'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Ring } from '@/components/ui/Ring'
-import { SectionTitle, Input, Segmented } from '@/components/ui/primitives'
+import { SectionTitle, Input, Segmented, EmptyState } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import type { AreaKey, Habit } from '@/lib/types'
@@ -20,11 +20,15 @@ export default function Habits() {
     <div className="space-y-6 pt-2">
       <SectionTitle title="Habits" subtitle="Not checkboxes — streaks, heatmaps and consistency you can feel." action={<Button onClick={() => setOpen(true)}>＋ New habit</Button>} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {s.habits.map((h, i) => (
-          <HabitCard key={h.id} habit={h} delay={i * 0.04} today={today} />
-        ))}
-      </div>
+      {s.habits.length === 0 ? (
+        <EmptyState icon="⚡" title="Build your first habit" hint="Small daily wins compound into life-changing momentum." />
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {s.habits.map((h, i) => (
+            <HabitCard key={h.id} habit={h} delay={i * 0.04} today={today} />
+          ))}
+        </div>
+      )}
 
       <NewHabitModal open={open} onClose={() => setOpen(false)} />
     </div>
@@ -54,7 +58,10 @@ function HabitCard({ habit, delay, today }: { habit: Habit; delay: number; today
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={() => s.toggleHabit(habit.id, today)}
-          className="flex h-10 w-10 items-center justify-center rounded-full border-2 text-lg transition-colors"
+          role="checkbox"
+          aria-checked={doneToday}
+          aria-label={`${doneToday ? 'Done today' : 'Mark done'}: ${habit.name}`}
+          className="flex h-11 w-11 items-center justify-center rounded-full border-2 text-lg transition-colors"
           style={{ borderColor: doneToday ? meta.color : 'rgba(255,255,255,0.2)', background: doneToday ? meta.color : 'transparent', color: doneToday ? '#07080d' : 'rgba(255,255,255,0.4)' }}
         >
           {doneToday ? '✓' : '＋'}

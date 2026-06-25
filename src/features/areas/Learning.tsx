@@ -39,7 +39,7 @@ export default function Learning() {
                 <Tag color={color}>{c.source}</Tag>
                 {c.certificate && <span title="Certificate earned" className="text-lg">🎓</span>}
               </div>
-              <h3 className="mt-3 font-semibold leading-snug">{c.title}</h3>
+              <h3 className="mt-3 line-clamp-2 min-h-[2.6em] font-semibold leading-snug">{c.title}</h3>
               <div className="mt-4 flex items-center gap-4">
                 <Ring value={c.progress} size={64} stroke={7} color={color}><span className="text-xs font-bold">{c.progress}%</span></Ring>
                 <div className="flex-1 space-y-1 text-[11px] text-white/45">

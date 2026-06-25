@@ -7,6 +7,7 @@ import { totalXP, titleForLevel } from '@/lib/xp'
 import { greeting, countdown, ageFrom } from '@/lib/dates'
 import { quoteOfDay } from '@/data/quotes'
 import { generateInsight } from '@/lib/insights'
+import { goalProgress } from '@/lib/goals'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Ring } from '@/components/ui/Ring'
 import { Progress } from '@/components/ui/Progress'
@@ -141,7 +142,7 @@ export default function Home() {
           </div>
           <div className="space-y-4">
             {topGoals.map((g) => {
-              const prog = g.target ? Math.round(((g.current ?? 0) / g.target) * 100) : g.progress
+              const prog = goalProgress(g, s.goals)
               const meta = AREA_META[g.area]
               return (
                 <div key={g.id}>
@@ -194,14 +195,15 @@ export default function Home() {
             }}
             className="mb-3 flex gap-2"
           >
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Capture a thought…" className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-accent/60" />
-            <button className="rounded-xl bg-accent px-3 text-sm font-semibold">+</button>
+            <input value={note} onChange={(e) => setNote(e.target.value)} aria-label="New note" placeholder="Capture a thought…" className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-accent/60" />
+            <button aria-label="Add note" className="rounded-xl bg-accent px-3 text-sm font-semibold">+</button>
           </form>
           <div className="flex-1 space-y-2 overflow-y-auto no-scrollbar">
+            {s.notes.length === 0 && <p className="px-1 py-6 text-center text-sm text-white/30">No notes yet — jot down a spark.</p>}
             {s.notes.slice(0, 6).map((n) => (
               <div key={n.id} className="group flex items-start justify-between gap-2 rounded-lg bg-white/[0.03] px-3 py-2 text-sm">
                 <span className="text-white/70">{n.text}</span>
-                <button onClick={() => s.deleteNote(n.id)} className="text-white/20 opacity-0 transition group-hover:opacity-100 hover:text-bad">×</button>
+                <button onClick={() => s.deleteNote(n.id)} aria-label="Delete note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
               </div>
             ))}
           </div>

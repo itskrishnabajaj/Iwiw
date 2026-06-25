@@ -14,9 +14,10 @@ export default {
         glass: 'rgba(255,255,255,0.04)',
         line: 'rgba(255,255,255,0.08)',
         accent: {
-          DEFAULT: '#7c5cff',
+          // Theme-driven via CSS vars (set by applyPrefs); fall back to violet.
+          DEFAULT: 'rgb(var(--accent, 124 92 255) / <alpha-value>)',
           soft: '#9d86ff',
-          cyan: '#36e6e0',
+          cyan: 'rgb(var(--accent-cyan, 54 230 224) / <alpha-value>)',
           violet: '#a855f7',
           indigo: '#6366f1',
         },

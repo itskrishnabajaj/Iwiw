@@ -87,9 +87,9 @@ export default function MBA() {
                     <div className="mb-1 flex items-center justify-between text-sm">
                       <span>{t.topic}</span>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => s.bumpTopic(t.topic, -2)} className="h-5 w-5 rounded bg-white/5 text-xs text-white/50">−</button>
+                        <button onClick={() => s.bumpTopic(t.topic, -2)} aria-label={`Decrease ${t.topic} mastery`} className="h-7 w-7 rounded-lg bg-white/5 text-xs text-white/50 hover:bg-white/10">−</button>
                         <span className="w-9 text-right tabular-nums text-white/60">{t.mastery}%</span>
-                        <button onClick={() => s.bumpTopic(t.topic, 2)} className="h-5 w-5 rounded bg-accent/70 text-xs">＋</button>
+                        <button onClick={() => s.bumpTopic(t.topic, 2)} aria-label={`Increase ${t.topic} mastery`} className="h-7 w-7 rounded-lg bg-accent/70 text-xs">＋</button>
                       </div>
                     </div>
                     <Progress value={t.mastery} color={t.mastery >= 70 ? '#34d399' : t.mastery >= 50 ? '#fbbf24' : '#fb7185'} height={6} />

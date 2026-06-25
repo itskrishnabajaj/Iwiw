@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
 import { prettyDate } from '@/lib/dates'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -38,6 +39,7 @@ export function AppShell() {
           </div>
           <button
             onClick={() => (window as unknown as { openPalette?: () => void }).openPalette?.()}
+            aria-label="Search everything (Command or Control + K)"
             className="group flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/40 transition hover:border-white/20 hover:text-white/70"
           >
             <span>⌕</span>
@@ -57,7 +59,9 @@ export function AppShell() {
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
               className="mx-auto max-w-7xl"
             >
-              <Outlet />
+              <ErrorBoundary label={location.pathname.replace('/', '') || 'home'}>
+                <Outlet />
+              </ErrorBoundary>
             </motion.div>
           </AnimatePresence>
         </main>

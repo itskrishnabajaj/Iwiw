@@ -4,21 +4,13 @@ import { useAppStore } from '@/store/useAppStore'
 import { AREA_META } from '@/store/selectors'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Progress } from '@/components/ui/Progress'
-import { SectionTitle, Tag, Input } from '@/components/ui/primitives'
+import { SectionTitle, Tag, Input, EmptyState } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { goalProgress } from '@/lib/goals'
 import type { AreaKey, Goal, GoalHorizon } from '@/lib/types'
 
 const HORIZONS: GoalHorizon[] = ['annual', 'quarterly', 'monthly', 'weekly', 'daily']
-
-function rollup(goal: Goal, all: Goal[]): number {
-  const children = all.filter((g) => g.parentId === goal.id)
-  if (children.length === 0) {
-    if (goal.target) return Math.round(((goal.current ?? 0) / goal.target) * 100)
-    return goal.progress
-  }
-  return Math.round(children.reduce((sum, c) => sum + rollup(c, all), 0) / children.length)
-}
 
 export default function Goals() {
   const s = useAppStore()
@@ -29,11 +21,15 @@ export default function Goals() {
     <div className="space-y-6 pt-2">
       <SectionTitle title="Goals" subtitle="Annual ambitions that cascade down to today’s 25 questions." action={<Button onClick={() => setOpen(true)}>＋ New goal</Button>} />
 
-      <div className="space-y-4">
-        {roots.map((g, i) => (
-          <GoalNode key={g.id} goal={g} all={s.goals} depth={0} delay={i * 0.05} />
-        ))}
-      </div>
+      {roots.length === 0 ? (
+        <EmptyState icon="◎" title="No goals yet" hint="Set an annual ambition and break it down to today." />
+      ) : (
+        <div className="space-y-4">
+          {roots.map((g, i) => (
+            <GoalNode key={g.id} goal={g} all={s.goals} depth={0} delay={i * 0.05} />
+          ))}
+        </div>
+      )}
 
       <NewGoalModal open={open} onClose={() => setOpen(false)} />
     </div>
@@ -43,7 +39,7 @@ export default function Goals() {
 function GoalNode({ goal, all, depth, delay = 0 }: { goal: Goal; all: Goal[]; depth: number; delay?: number }) {
   const s = useAppStore()
   const children = all.filter((g) => g.parentId === goal.id)
-  const prog = rollup(goal, all)
+  const prog = goalProgress(goal, all)
   const meta = AREA_META[goal.area]
   const isLeaf = children.length === 0
 
@@ -67,8 +63,8 @@ function GoalNode({ goal, all, depth, delay = 0 }: { goal: Goal; all: Goal[]; de
 
         {isLeaf && goal.target && (
           <div className="mt-3 flex items-center gap-2">
-            <button onClick={() => s.updateGoal(goal.id, { current: Math.max(0, (goal.current ?? 0) - 1) })} className="h-7 w-7 rounded-lg bg-white/5 text-white/60 hover:bg-white/10">−</button>
-            <button onClick={() => s.updateGoal(goal.id, { current: Math.min(goal.target!, (goal.current ?? 0) + 1) })} className="h-7 w-7 rounded-lg bg-accent/80 font-semibold">＋</button>
+            <button onClick={() => s.updateGoal(goal.id, { current: Math.max(0, (goal.current ?? 0) - 1) })} aria-label={`Decrease ${goal.title}`} className="h-9 w-9 rounded-lg bg-white/5 text-white/60 hover:bg-white/10">−</button>
+            <button onClick={() => s.updateGoal(goal.id, { current: Math.min(goal.target!, (goal.current ?? 0) + 1) })} aria-label={`Increase ${goal.title}`} className="h-9 w-9 rounded-lg bg-accent/80 font-semibold">＋</button>
             <span className="text-xs text-white/35">log progress</span>
           </div>
         )}

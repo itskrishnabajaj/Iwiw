@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
 import { GlassCard } from '@/components/ui/GlassCard'
-import { SectionTitle, Input } from '@/components/ui/primitives'
+import { SectionTitle, Input, EmptyState } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 
@@ -23,6 +23,10 @@ export default function Vision() {
     <div className="space-y-6 pt-2">
       <SectionTitle title="✧ Vision Board" subtitle="The future you’re building toward — make it vivid." action={<Button onClick={() => setOpen(true)}>＋ Add vision</Button>} />
 
+      {s.vision.length === 0 && (
+        <EmptyState icon="✧" title="Your vision board is empty" hint="Add the colleges, physique, income and life you’re building toward." />
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {s.vision.map((v, i) => (
           <motion.div key={v.id} whileHover={{ y: -6, scale: 1.02 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
@@ -37,10 +41,10 @@ export default function Vision() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5">
                 <div className="text-[10px] uppercase tracking-wider text-white/60">{v.category}</div>
-                <div className="text-lg font-bold">{v.title}</div>
-                <div className="text-sm text-white/70">{v.caption}</div>
+                <div className="line-clamp-2 text-lg font-bold">{v.title}</div>
+                <div className="line-clamp-1 text-sm text-white/70">{v.caption}</div>
               </div>
-              <button onClick={() => useAppStore.setState((st) => ({ vision: st.vision.filter((x) => x.id !== v.id) }))} className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white/50 opacity-0 transition hover:text-bad group-hover:opacity-100">×</button>
+              <button onClick={() => useAppStore.setState((st) => ({ vision: st.vision.filter((x) => x.id !== v.id) }))} aria-label={`Delete ${v.title}`} className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white/60 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
             </GlassCard>
           </motion.div>
         ))}

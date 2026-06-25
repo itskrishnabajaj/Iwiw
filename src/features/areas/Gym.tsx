@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { LineChart, BarChart } from '@/components/charts/Charts'
 import { Sparkline } from '@/components/ui/Sparkline'
+import { getMoodEmoji } from '@/lib/constants'
 import { format, parseISO } from 'date-fns'
 
 export default function Gym() {
@@ -60,8 +61,8 @@ export default function Gym() {
 
         <GlassCard className="p-6 lg:col-span-2">
           <h2 className="mb-4 text-lg font-semibold">Recovery dashboard · last days</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="-mx-6 overflow-x-auto px-6">
+            <table className="w-full min-w-[460px] text-left text-sm">
               <thead className="text-[11px] uppercase tracking-wider text-white/35">
                 <tr><th className="pb-2">Date</th><th>Sleep</th><th>Water</th><th>Protein</th><th>Mood</th><th>Recovery</th></tr>
               </thead>
@@ -72,7 +73,7 @@ export default function Gym() {
                     <td>{d.sleep}h</td>
                     <td>{d.water}L</td>
                     <td>{d.protein}g</td>
-                    <td>{'😴😐🙂😀🤩'[Math.min(4, d.mood - 1)] || '🙂'}</td>
+                    <td>{getMoodEmoji(d.mood)}</td>
                     <td><Tag color={d.recovery >= 75 ? '#34d399' : d.recovery >= 60 ? '#fbbf24' : '#fb7185'}>{d.recovery}%</Tag></td>
                   </tr>
                 ))}
