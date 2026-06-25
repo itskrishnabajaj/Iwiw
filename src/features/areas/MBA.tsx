@@ -9,6 +9,7 @@ import { SectionTitle, Stat, Tag, Input, Segmented } from '@/components/ui/primi
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { LineChart, BarChart } from '@/components/charts/Charts'
+import { MBADeep } from './mba/MBADeep'
 import { format, parseISO } from 'date-fns'
 import { todayISO } from '@/lib/dates'
 
@@ -72,6 +73,9 @@ export default function MBA() {
           <BarChart labels={recentStudy.labels} data={recentStudy.data} color="#36e6e0" height={240} />
         </GlassCard>
       </div>
+
+      {/* Deep analysis: countdowns, AI focus, sections, velocity, weakness, revision */}
+      <MBADeep />
 
       {/* Topics */}
       <div className="grid gap-6 lg:grid-cols-2">

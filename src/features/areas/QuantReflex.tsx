@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { CountUp } from '@/components/ui/CountUp'
+import { Ring } from '@/components/ui/Ring'
 import { Progress } from '@/components/ui/Progress'
 import { SectionTitle, Stat, Tag, Input } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
@@ -24,16 +25,48 @@ export default function QuantReflex() {
   const [open, setOpen] = useState(false)
   const checklistGroups = [...new Set(s.qr.checklist.map((c) => c.group))]
 
+  const checklistDone = s.qr.checklist.filter((c) => c.done).length
+  const readiness = s.qr.checklist.length ? Math.round((checklistDone / s.qr.checklist.length) * 100) : 0
+  const shipped = s.qr.items.filter((i) => i.status === 'done').length
+  const ideas = s.qr.items.filter((i) => i.type === 'idea')
+  const bugs = s.qr.items.filter((i) => i.type === 'bug' && i.status !== 'done').length
+  const userGoalPct = Math.min(100, Math.round((s.qr.users / 1000) * 100))
+
   return (
     <div className="space-y-6 pt-2">
       <SectionTitle title="⚡ QuantReflex" subtitle="India’s leading aptitude prep platform — in the making." action={<Button onClick={() => setOpen(true)}>＋ Item</Button>} />
 
       {/* Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <GlassCard className="p-5" glow="#36e6e0"><Stat label="Active users" value={<CountUp value={s.qr.users} />} sub="goal 1,000" color="#36e6e0" /></GlassCard>
+        <GlassCard className="p-5" glow="#36e6e0"><Stat label="Active users" value={<CountUp value={s.qr.users} />} sub={`${userGoalPct}% to 1,000 goal`} color="#36e6e0" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Downloads" value={<CountUp value={s.qr.downloads} />} color="#7c5cff" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Revenue" value={<CountUp value={s.qr.revenue} prefix="₹" />} color="#34d399" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Avg rating" value="4.7★" sub={`${s.qr.feedback.length} reviews`} color="#fbbf24" /></GlassCard>
+      </div>
+
+      {/* Launch readiness + growth */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <GlassCard className="flex items-center gap-5 p-6" glow="#34d399">
+          <Ring value={readiness} size={104} color="#34d399"><div className="text-center"><div className="text-2xl font-black">{readiness}%</div><div className="text-[10px] uppercase tracking-wider text-white/40">Ready</div></div></Ring>
+          <div>
+            <div className="text-sm font-semibold">Launch readiness</div>
+            <p className="mt-1 text-xs text-white/45">{checklistDone}/{s.qr.checklist.length} launch tasks complete across Play Store & Firebase.</p>
+            {bugs > 0 && <p className="mt-1 text-xs text-bad">{bugs} open bug{bugs > 1 ? 's' : ''} to squash first.</p>}
+          </div>
+        </GlassCard>
+        <GlassCard className="p-6">
+          <div className="text-sm font-semibold">User growth to goal</div>
+          <div className="mt-3 text-3xl font-black text-accent-cyan"><CountUp value={s.qr.users} /> <span className="text-base font-normal text-white/40">/ 1,000</span></div>
+          <Progress value={userGoalPct} color="#36e6e0" className="mt-3" />
+        </GlassCard>
+        <GlassCard className="p-6">
+          <div className="text-sm font-semibold">Build momentum</div>
+          <div className="mt-3 flex gap-6">
+            <div><div className="text-2xl font-black text-good">{shipped}</div><div className="text-xs text-white/40">shipped</div></div>
+            <div><div className="text-2xl font-black text-accent-soft">{ideas.length}</div><div className="text-xs text-white/40">ideas in vault</div></div>
+            <div><div className="text-2xl font-black text-bad">{bugs}</div><div className="text-xs text-white/40">open bugs</div></div>
+          </div>
+        </GlassCard>
       </div>
 
       {/* Board */}

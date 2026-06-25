@@ -2,16 +2,36 @@ import { useMemo } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { lifeBalance, AREA_META, weeklyXP } from '@/store/selectors'
 import { GlassCard } from '@/components/ui/GlassCard'
-import { SectionTitle, Stat } from '@/components/ui/primitives'
+import { SectionTitle, Stat, Tag } from '@/components/ui/primitives'
+import { Ring } from '@/components/ui/Ring'
 import { LineChart, BarChart, RadarChart, DoughnutChart } from '@/components/charts/Charts'
+import { useIntelligence, useProductivityScore } from '@/hooks/useIntelligence'
 import { lastNDates } from '@/lib/dates'
 import { format, parseISO } from 'date-fns'
 import type { AreaKey } from '@/lib/types'
 
+const WEEKDAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
 export default function Analytics() {
   const s = useAppStore()
+  const reviews = useIntelligence(['weekly', 'monthly'])
+  const productivity = useProductivityScore()
 
   const balance = useMemo(() => lifeBalance(s), [s.xpEvents])
+
+  // Most productive weekday & hour, from XP event timestamps.
+  const productive = useMemo(() => {
+    const byDay = new Array(7).fill(0)
+    const byHour = new Array(24).fill(0)
+    for (const e of s.xpEvents) {
+      const d = new Date(e.ts)
+      byDay[(d.getDay() + 6) % 7] += e.amount
+      byHour[d.getHours()] += e.amount
+    }
+    const topDay = byDay.indexOf(Math.max(...byDay))
+    const topHour = byHour.indexOf(Math.max(...byHour))
+    return { day: WEEKDAY_NAMES[topDay], hour: topHour }
+  }, [s.xpEvents])
 
   // XP by area (last 14d) for doughnut
   const areaTotals = useMemo(() => {
@@ -59,13 +79,33 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6 pt-2">
-      <SectionTitle title="Analytics" subtitle="Make long-term progress tangible." />
+      <SectionTitle title="Analytics" subtitle="Executive dashboards — every chart answers a question." />
+
+      {/* Executive review: productivity score + AI weekly/monthly review */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <GlassCard className="flex items-center gap-5 p-6" glow="#7c5cff">
+          <Ring value={productivity} size={104} color="#7c5cff"><div className="text-center"><div className="text-2xl font-black">{productivity}</div><div className="text-[10px] uppercase tracking-wider text-white/40">Score</div></div></Ring>
+          <div>
+            <div className="text-sm font-semibold">Productivity score</div>
+            <p className="mt-1 text-xs text-white/45">A composite of today’s completion, focus, streak, weekly XP and recovery.</p>
+          </div>
+        </GlassCard>
+        {reviews.map((r) => (
+          <GlassCard key={r.id} className="p-6">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <span>{r.icon}</span>{r.title}
+              <Tag color={r.tone === 'good' ? '#34d399' : '#7c5cff'}>{r.kind}</Tag>
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-white/65">{r.body}</p>
+          </GlassCard>
+        ))}
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <GlassCard className="p-5"><Stat label="Total study hours" value={totalHours.toFixed(0)} sub="all time" color="#7c5cff" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Avg focus score" value={`${avgFocus}%`} sub="per session" color="#34d399" /></GlassCard>
-        <GlassCard className="p-5"><Stat label="Weekly XP" value={weeklyXP(s).toLocaleString()} sub="last 7 days" color="#36e6e0" /></GlassCard>
-        <GlassCard className="p-5"><Stat label="Questions solved" value={s.mba.questionBankSolved.toLocaleString()} sub="question bank" color="#fbbf24" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="Most productive day" value={productive.day} sub="by XP earned" color="#36e6e0" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="Peak hour" value={`${productive.hour}:00`} sub="when you earn most XP" color="#fbbf24" /></GlassCard>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

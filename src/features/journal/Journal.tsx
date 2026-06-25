@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { GlassCard } from '@/components/ui/GlassCard'
+import { Sparkline } from '@/components/ui/Sparkline'
 import { SectionTitle, Textarea, Input, EmptyState } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { getMoodEmoji, MOOD_LABELS } from '@/lib/constants'
@@ -33,6 +34,21 @@ export default function Journal() {
     return s.journal.filter((e) => [e.wentWell, e.didntGoWell, e.lessons, e.gratitude, e.ideas].join(' ').toLowerCase().includes(q))
   }, [query, s.journal])
 
+  const moodSeries = useMemo(
+    () => [...s.journal].reverse().map((e) => e.mood),
+    [s.journal],
+  )
+
+  const keywords = useMemo(() => {
+    const STOP = new Set('the a an and or but to of in on for with my i me is was were be been have has had this that it at as so not no got get day today will can do done more most just felt feel good bad went didnt dont im'.split(' '))
+    const freq = new Map<string, number>()
+    for (const e of s.journal) {
+      const words = [e.wentWell, e.didntGoWell, e.lessons, e.gratitude, e.ideas].join(' ').toLowerCase().match(/[a-z]{4,}/g) ?? []
+      for (const w of words) if (!STOP.has(w)) freq.set(w, (freq.get(w) ?? 0) + 1)
+    }
+    return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12)
+  }, [s.journal])
+
   return (
     <div className="space-y-6 pt-2">
       <SectionTitle title="✍️ Journal" subtitle="Your reflections, searchable forever." />
@@ -55,6 +71,30 @@ export default function Journal() {
           <Button onClick={save}>Save entry · earns XP</Button>
         </div>
       </GlassCard>
+
+      {s.journal.length > 1 && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <GlassCard className="p-6 lg:col-span-1">
+            <h3 className="mb-2 text-sm font-semibold">Mood timeline</h3>
+            <Sparkline data={moodSeries} color="#f472b6" width={260} height={70} />
+            <div className="mt-2 text-xs text-white/40">{s.journal.length} entries · latest {getMoodEmoji(s.journal[0].mood)}</div>
+          </GlassCard>
+          <GlassCard className="p-6 lg:col-span-2">
+            <h3 className="mb-3 text-sm font-semibold">What you write about most</h3>
+            {keywords.length === 0 ? (
+              <p className="text-sm text-white/35">Write a few entries to reveal your themes.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {keywords.map(([word, n]) => (
+                  <span key={word} className="rounded-full bg-accent/10 px-3 py-1 text-sm text-accent-soft" style={{ fontSize: `${0.8 + Math.min(0.6, n * 0.12)}rem` }}>
+                    {word} <span className="text-white/30">{n}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </GlassCard>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Past entries</h2>
