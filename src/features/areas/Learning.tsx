@@ -19,15 +19,39 @@ export default function Learning() {
   const certs = s.courses.filter((c) => c.certificate).length
   const avgProg = s.courses.length ? Math.round(s.courses.reduce((a, c) => a + c.progress, 0) / s.courses.length) : 0
 
+  // Recommend the in-progress course closest to the finish line.
+  const upNext = [...s.courses].filter((c) => c.progress > 0 && c.progress < 100).sort((a, b) => b.progress - a.progress)[0]
+  const hoursBySource = s.courses.reduce<Record<string, number>>((acc, c) => { acc[c.source] = (acc[c.source] ?? 0) + c.hoursInvested; return acc }, {})
+
   return (
     <div className="space-y-6 pt-2">
       <SectionTitle title="📚 Learning" subtitle="Every course, book, and idea — compounding." action={<Button onClick={() => setOpen(true)}>＋ Course</Button>} />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <GlassCard className="p-5"><Stat label="Hours invested" value={totalHours.toFixed(0)} color="#60a5fa" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Certificates" value={certs} color="#34d399" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Avg. completion" value={`${avgProg}%`} color="#a855f7" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="In progress" value={s.courses.filter((c) => c.progress > 0 && c.progress < 100).length} color="#fbbf24" /></GlassCard>
       </div>
+
+      {upNext && (
+        <GlassCard className="p-6" glow={SOURCE_COLOR[upNext.source]}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-white/40">✦ Continue learning</div>
+              <div className="mt-1 text-lg font-semibold">{upNext.title}</div>
+              <div className="mt-0.5 text-sm text-white/45">{upNext.progress}% done · {Math.max(0, upNext.totalHours - upNext.hoursInvested).toFixed(1)}h to finish · {upNext.source}</div>
+            </div>
+            <button onClick={() => s.updateCourse(upNext.id, { progress: Math.min(100, upNext.progress + 10), certificate: upNext.progress + 10 >= 100 ? true : upNext.certificate })} className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold shadow-glow">Log 10% →</button>
+          </div>
+          <Progress value={upNext.progress} color={SOURCE_COLOR[upNext.source]} className="mt-4" />
+          <div className="mt-4 flex flex-wrap gap-2">
+            {Object.entries(hoursBySource).map(([src, h]) => (
+              <span key={src} className="rounded-full px-2.5 py-0.5 text-[11px]" style={{ background: SOURCE_COLOR[src as Course['source']] + '22', color: SOURCE_COLOR[src as Course['source']] }}>{src}: {h.toFixed(0)}h</span>
+            ))}
+          </div>
+        </GlassCard>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {s.courses.map((c, i) => {

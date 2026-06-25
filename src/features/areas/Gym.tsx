@@ -18,6 +18,15 @@ export default function Gym() {
   const delta = (latest - first).toFixed(1)
   const daily = [...s.gym.daily].reverse()
 
+  const meas = s.gym.measurements
+  const measFirst = meas[0]
+  const measLast = meas[meas.length - 1]
+  const measRows = measFirst && measLast
+    ? ([['Chest', measFirst.chest, measLast.chest], ['Waist', measFirst.waist, measLast.waist], ['Arms', measFirst.arms, measLast.arms]] as const)
+    : []
+  const workoutsThisWeek = s.gym.workouts.filter((w) => Date.now() - new Date(w.date).getTime() < 7 * 86400000).length
+  const avgVolume = s.gym.workouts.length ? Math.round(s.gym.workouts.reduce((a, w) => a + w.volume, 0) / s.gym.workouts.length) : 0
+
   return (
     <div className="space-y-6 pt-2">
       <SectionTitle title="💪 Gym & Body" subtitle="Strength, recovery, and the dream physique — tracked." action={<Button onClick={() => setOpen(true)}>＋ Log weight</Button>} />
@@ -32,6 +41,35 @@ export default function Gym() {
             <span className="text-2xl font-bold text-good">{Math.round(daily.reduce((a, d) => a + d.recovery, 0) / Math.max(1, daily.length))}%</span>
             <Sparkline data={daily.map((d) => d.recovery)} color="#34d399" width={70} height={28} />
           </div>
+        </GlassCard>
+      </div>
+
+      {/* Consistency + body composition */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <GlassCard className="p-6">
+          <h3 className="text-sm font-semibold">This week</h3>
+          <div className="mt-3 text-4xl font-black text-accent-soft">{workoutsThisWeek}<span className="ml-1 text-base font-normal text-white/40">workouts</span></div>
+          <div className="mt-1 text-xs text-white/40">Avg session volume {avgVolume.toLocaleString()} kg</div>
+        </GlassCard>
+        <GlassCard className="p-6 lg:col-span-2">
+          <h3 className="mb-3 text-sm font-semibold">Body composition trend</h3>
+          {measRows.length === 0 ? (
+            <p className="text-sm text-white/35">Log measurements to see trends.</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {measRows.map(([label, from, to]) => {
+                const d = +(to - from).toFixed(1)
+                const good = label === 'Waist' ? d < 0 : d > 0
+                return (
+                  <div key={label} className="rounded-xl bg-white/[0.03] p-4 text-center">
+                    <div className="text-[11px] uppercase tracking-wider text-white/40">{label}</div>
+                    <div className="mt-1 text-2xl font-bold">{to}<span className="text-sm text-white/40">cm</span></div>
+                    <div className={`mt-0.5 text-xs ${good ? 'text-good' : 'text-bad'}`}>{d >= 0 ? '+' : ''}{d}cm</div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </GlassCard>
       </div>
 

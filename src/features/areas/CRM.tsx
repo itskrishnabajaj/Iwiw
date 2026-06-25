@@ -22,14 +22,60 @@ export default function CRM() {
   const partners = s.institutes.filter((i) => i.stage === 'partner').length
   const avgProb = s.institutes.length ? Math.round(s.institutes.reduce((a, i) => a + i.probability, 0) / s.institutes.length) : 0
 
+  const today = new Date().toISOString().slice(0, 10)
+  const expectedPartners = (s.institutes.filter((i) => i.stage !== 'partner').reduce((a, i) => a + i.probability, 0) / 100).toFixed(1)
+  const overdue = s.institutes.filter((i) => i.followUp && i.followUp < today && i.stage !== 'partner').sort((a, b) => (a.followUp! < b.followUp! ? -1 : 1))
+  const active = s.institutes.filter((i) => i.stage !== 'partner').length
+
   return (
     <div className="space-y-6 pt-2">
       <SectionTitle title="🤝 Coaching Outreach CRM" subtitle="Your pipeline to partner with India’s coaching institutes." action={<Button onClick={() => setOpen(true)}>＋ Institute</Button>} />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <GlassCard className="p-5"><Stat label="Institutes" value={s.institutes.length} color="#fb923c" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Partners closed" value={partners} color="#34d399" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="Expected partners" value={expectedPartners} sub={`from ${active} active leads`} color="#a855f7" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Avg. probability" value={`${avgProb}%`} color="#fbbf24" /></GlassCard>
+      </div>
+
+      {/* Pipeline funnel + follow-up reminders */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <GlassCard className="p-6 lg:col-span-2">
+          <h2 className="mb-4 text-lg font-semibold">Pipeline funnel</h2>
+          <div className="space-y-2.5">
+            {STAGES.map((stage) => {
+              const count = s.institutes.filter((i) => i.stage === stage.key).length
+              const pct = s.institutes.length ? (count / s.institutes.length) * 100 : 0
+              return (
+                <div key={stage.key} className="flex items-center gap-3">
+                  <span className="w-28 shrink-0 text-xs text-white/55">{stage.label}</span>
+                  <div className="h-6 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
+                    <div className="flex h-full items-center justify-end rounded-lg px-2 text-[11px] font-semibold text-base-900" style={{ width: `${Math.max(pct, count ? 12 : 0)}%`, background: stage.color }}>{count || ''}</div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-6">
+          <h2 className="mb-3 text-lg font-semibold">Follow-ups due</h2>
+          {overdue.length === 0 ? (
+            <p className="text-sm text-good">You're all caught up. 🎉</p>
+          ) : (
+            <div className="space-y-2">
+              {overdue.map((i) => (
+                <div key={i.id} className="flex items-center justify-between rounded-xl bg-bad/10 px-3 py-2">
+                  <div>
+                    <div className="text-sm font-medium">{i.name}</div>
+                    <div className="text-[11px] text-bad/80">due {i.followUp}</div>
+                  </div>
+                  <button onClick={() => s.updateInstitute(i.id, { followUp: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) })} aria-label={`Snooze follow-up for ${i.name} one week`} className="rounded-lg bg-white/5 px-2.5 py-1 text-xs text-white/60 hover:bg-white/10">Logged ✓</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </GlassCard>
       </div>
 
       <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4">
