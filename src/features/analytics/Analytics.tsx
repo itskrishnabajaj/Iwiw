@@ -1,0 +1,104 @@
+import { useMemo } from 'react'
+import { useAppStore } from '@/store/useAppStore'
+import { lifeBalance, AREA_META, weeklyXP } from '@/store/selectors'
+import { GlassCard } from '@/components/ui/GlassCard'
+import { SectionTitle, Stat } from '@/components/ui/primitives'
+import { LineChart, BarChart, RadarChart, DoughnutChart } from '@/components/charts/Charts'
+import { lastNDates } from '@/lib/dates'
+import { format, parseISO } from 'date-fns'
+import type { AreaKey } from '@/lib/types'
+
+export default function Analytics() {
+  const s = useAppStore()
+
+  const balance = useMemo(() => lifeBalance(s), [s.xpEvents])
+
+  // XP by area (last 14d) for doughnut
+  const areaTotals = useMemo(() => {
+    const cutoff = Date.now() - 14 * 86400000
+    const totals: Record<string, number> = {}
+    for (const e of s.xpEvents) if (e.ts >= cutoff) totals[e.area] = (totals[e.area] || 0) + e.amount
+    return totals
+  }, [s.xpEvents])
+
+  // Daily XP momentum (last 30 days)
+  const momentum = useMemo(() => {
+    const dates = lastNDates(30)
+    const map = new Map(dates.map((d) => [d, 0]))
+    for (const e of s.xpEvents) {
+      const d = new Date(e.ts).toISOString().slice(0, 10)
+      if (map.has(d)) map.set(d, (map.get(d) || 0) + e.amount)
+    }
+    return { labels: dates.map((d) => format(parseISO(d), 'd MMM')), data: dates.map((d) => map.get(d) || 0) }
+  }, [s.xpEvents])
+
+  // Study hours per weekday + most productive hour heuristic
+  const study = s.mba.studyLogs
+  const hoursByWeekday = useMemo(() => {
+    const buckets = [0, 0, 0, 0, 0, 0, 0]
+    const counts = [0, 0, 0, 0, 0, 0, 0]
+    for (const l of study) {
+      const d = (parseISO(l.date).getDay() + 6) % 7
+      buckets[d] += l.hours
+      counts[d]++
+    }
+    return buckets.map((b, i) => (counts[i] ? +(b / counts[i]).toFixed(1) : 0))
+  }, [study])
+
+  const totalHours = study.reduce((a, l) => a + l.hours, 0)
+  const avgFocus = study.length ? Math.round(study.reduce((a, l) => a + l.focusScore, 0) / study.length) : 0
+
+  // study vs gym vs qr balance (counts)
+  const balanceData = [
+    { key: 'mba' as AreaKey, value: areaTotals.mba || 0 },
+    { key: 'qr' as AreaKey, value: areaTotals.qr || 0 },
+    { key: 'gym' as AreaKey, value: areaTotals.gym || 0 },
+  ]
+
+  const radarLabels = balance.map((b) => AREA_META[b.area].label.split(' ')[0])
+
+  return (
+    <div className="space-y-6 pt-2">
+      <SectionTitle title="Analytics" subtitle="Make long-term progress tangible." />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <GlassCard className="p-5"><Stat label="Total study hours" value={totalHours.toFixed(0)} sub="all time" color="#7c5cff" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="Avg focus score" value={`${avgFocus}%`} sub="per session" color="#34d399" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="Weekly XP" value={weeklyXP(s).toLocaleString()} sub="last 7 days" color="#36e6e0" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="Questions solved" value={s.mba.questionBankSolved.toLocaleString()} sub="question bank" color="#fbbf24" /></GlassCard>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <GlassCard className="p-6 lg:col-span-2">
+          <h2 className="mb-4 text-lg font-semibold">Momentum — daily XP</h2>
+          <LineChart labels={momentum.labels} datasets={[{ label: 'XP', data: momentum.data, color: '#7c5cff' }]} height={260} />
+        </GlassCard>
+        <GlassCard className="p-6">
+          <h2 className="mb-4 text-lg font-semibold">Life Balance Wheel</h2>
+          <RadarChart labels={radarLabels} data={balance.map((b) => b.value)} color="#36e6e0" height={260} />
+        </GlassCard>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <GlassCard className="p-6">
+          <h2 className="mb-4 text-lg font-semibold">XP by area · 14d</h2>
+          <DoughnutChart
+            labels={Object.keys(areaTotals).map((k) => AREA_META[k as AreaKey].label)}
+            data={Object.values(areaTotals)}
+            colors={Object.keys(areaTotals).map((k) => AREA_META[k as AreaKey].color)}
+            height={240}
+          />
+        </GlassCard>
+        <GlassCard className="p-6">
+          <h2 className="mb-4 text-lg font-semibold">Avg study hours / weekday</h2>
+          <BarChart labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']} data={hoursByWeekday} color="#a855f7" height={240} />
+        </GlassCard>
+        <GlassCard className="p-6">
+          <h2 className="mb-4 text-lg font-semibold">Study · QuantReflex · Gym</h2>
+          <BarChart labels={balanceData.map((b) => AREA_META[b.key].label.split(' ')[0])} data={balanceData.map((b) => b.value)} color="#34d399" height={240} />
+          <p className="mt-3 text-xs text-white/40">XP earned in each over the last 14 days — keep the bars from drifting too far apart.</p>
+        </GlassCard>
+      </div>
+    </div>
+  )
+}
