@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useAppStore } from '@/store/useAppStore'
-import { AREA_META } from '@/store/selectors'
+import { AREA_META, sortByOrder } from '@/store/selectors'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Progress } from '@/components/ui/Progress'
 import { SectionTitle, Tag, Input, EmptyState, ExampleBadge } from '@/components/ui/primitives'
@@ -18,7 +18,14 @@ export default function Goals() {
   const s = useAppStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Goal | null>(null)
-  const roots = useMemo(() => s.goals.filter((g) => !g.parentId && !g.archived), [s.goals])
+  const roots = useMemo(() => sortByOrder(s.goals.filter((g) => !g.parentId && !g.archived)), [s.goals])
+  const move = (i: number, dir: -1 | 1) => {
+    const ids = roots.map((g) => g.id)
+    const j = i + dir
+    if (j < 0 || j >= ids.length) return
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    s.reorderGoals(ids)
+  }
 
   return (
     <div className="space-y-6 pt-2">
@@ -34,7 +41,16 @@ export default function Goals() {
       ) : (
         <div className="space-y-4">
           {roots.map((g, i) => (
-            <GoalNode key={g.id} goal={g} all={s.goals} depth={0} delay={i * 0.05} onEdit={setEditing} />
+            <GoalNode
+              key={g.id}
+              goal={g}
+              all={s.goals}
+              depth={0}
+              delay={i * 0.05}
+              onEdit={setEditing}
+              onMoveUp={i > 0 ? () => move(i, -1) : undefined}
+              onMoveDown={i < roots.length - 1 ? () => move(i, 1) : undefined}
+            />
           ))}
         </div>
       )}
@@ -45,7 +61,7 @@ export default function Goals() {
   )
 }
 
-function GoalNode({ goal, all, depth, delay = 0, onEdit }: { goal: Goal; all: Goal[]; depth: number; delay?: number; onEdit: (g: Goal) => void }) {
+function GoalNode({ goal, all, depth, delay = 0, onEdit, onMoveUp, onMoveDown }: { goal: Goal; all: Goal[]; depth: number; delay?: number; onEdit: (g: Goal) => void; onMoveUp?: () => void; onMoveDown?: () => void }) {
   const s = useAppStore()
   const children = all.filter((g) => g.parentId === goal.id && !g.archived)
   const prog = goalProgress(goal, all)
@@ -74,6 +90,8 @@ function GoalNode({ goal, all, depth, delay = 0, onEdit }: { goal: Goal; all: Go
               label={`Actions for ${goal.title}`}
               actions={[
                 { label: 'Edit', icon: '✎', onClick: () => onEdit(goal) },
+                ...(onMoveUp ? [{ label: 'Move up', icon: '↑', onClick: onMoveUp }] : []),
+                ...(onMoveDown ? [{ label: 'Move down', icon: '↓', onClick: onMoveDown }] : []),
                 { label: goal.done ? 'Mark not done' : 'Mark done', icon: '✓', onClick: () => s.updateGoal(goal.id, { done: !goal.done, progress: goal.done ? goal.progress : 100 }) },
                 { label: 'Add sub-goal', icon: '＋', onClick: () => s.addGoal({ title: 'New sub-goal', horizon: goal.horizon, area: goal.area, parentId: goal.id }) },
                 { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateGoal(goal.id) },

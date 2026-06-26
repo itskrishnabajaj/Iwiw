@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
-import { AREA_META } from '@/store/selectors'
+import { AREA_META, sortByOrder } from '@/store/selectors'
 import { currentStreak, bestStreak, successRate, consistencyScore } from '@/lib/streaks'
 import { lastNDates, todayISO } from '@/lib/dates'
 import toast from 'react-hot-toast'
@@ -18,7 +18,14 @@ export default function Habits() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Habit | null>(null)
   const today = todayISO()
-  const habits = s.habits.filter((h) => !h.archived)
+  const habits = sortByOrder(s.habits.filter((h) => !h.archived))
+  const move = (i: number, dir: -1 | 1) => {
+    const ids = habits.map((h) => h.id)
+    const j = i + dir
+    if (j < 0 || j >= ids.length) return
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    s.reorderHabits(ids)
+  }
 
   return (
     <div className="space-y-6 pt-2">
@@ -34,7 +41,15 @@ export default function Habits() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {habits.map((h, i) => (
-            <HabitCard key={h.id} habit={h} delay={i * 0.04} today={today} onEdit={() => setEditing(h)} />
+            <HabitCard
+              key={h.id}
+              habit={h}
+              delay={i * 0.04}
+              today={today}
+              onEdit={() => setEditing(h)}
+              onMoveUp={i > 0 ? () => move(i, -1) : undefined}
+              onMoveDown={i < habits.length - 1 ? () => move(i, 1) : undefined}
+            />
           ))}
         </div>
       )}
@@ -45,7 +60,7 @@ export default function Habits() {
   )
 }
 
-function HabitCard({ habit, delay, today, onEdit }: { habit: Habit; delay: number; today: string; onEdit: () => void }) {
+function HabitCard({ habit, delay, today, onEdit, onMoveUp, onMoveDown }: { habit: Habit; delay: number; today: string; onEdit: () => void; onMoveUp?: () => void; onMoveDown?: () => void }) {
   const s = useAppStore()
   const meta = AREA_META[habit.area]
   const cur = currentStreak(habit.log)
@@ -84,6 +99,8 @@ function HabitCard({ habit, delay, today, onEdit }: { habit: Habit; delay: numbe
             label={`Actions for ${habit.name}`}
             actions={[
               { label: 'Edit', icon: '✎', onClick: onEdit },
+              ...(onMoveUp ? [{ label: 'Move up', icon: '↑', onClick: onMoveUp }] : []),
+              ...(onMoveDown ? [{ label: 'Move down', icon: '↓', onClick: onMoveDown }] : []),
               { label: 'Archive', icon: '📦', onClick: () => { s.archiveHabit(habit.id); toast('Habit archived') } },
               { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteHabit(habit.id); toast('Habit deleted') } },
             ]}

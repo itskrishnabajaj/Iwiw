@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAppStore } from '@/store/useAppStore'
+import { sortByOrder } from '@/store/selectors'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Progress } from '@/components/ui/Progress'
 import { Ring } from '@/components/ui/Ring'
@@ -18,7 +19,14 @@ export default function Learning() {
   const s = useAppStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Course | null>(null)
-  const courses = s.courses.filter((c) => !c.archived)
+  const courses = sortByOrder(s.courses.filter((c) => !c.archived))
+  const move = (i: number, dir: -1 | 1) => {
+    const ids = courses.map((c) => c.id)
+    const j = i + dir
+    if (j < 0 || j >= ids.length) return
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    s.reorderCourses(ids)
+  }
   const totalHours = courses.reduce((a, c) => a + c.hoursInvested, 0)
   const certs = courses.filter((c) => c.certificate).length
   const avgProg = courses.length ? Math.round(courses.reduce((a, c) => a + c.progress, 0) / courses.length) : 0
@@ -89,6 +97,8 @@ export default function Learning() {
                     label={`Actions for ${c.title}`}
                     actions={[
                       { label: 'Edit', icon: '✎', onClick: () => setEditing(c) },
+                      ...(i > 0 ? [{ label: 'Move up', icon: '↑', onClick: () => move(i, -1) }] : []),
+                      ...(i < courses.length - 1 ? [{ label: 'Move down', icon: '↓', onClick: () => move(i, 1) }] : []),
                       { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateCourse(c.id) },
                       { label: 'Archive', icon: '📦', onClick: () => { s.archiveCourse(c.id); toast('Course archived') } },
                       { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteCourse(c.id); toast('Course deleted') } },

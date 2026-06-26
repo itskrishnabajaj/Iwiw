@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useAppStore } from '@/store/useAppStore'
+import { sortByOrder } from '@/store/selectors'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionTitle, Input, EmptyState, ExampleBadge } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
@@ -22,7 +23,14 @@ export default function Vision() {
   const s = useAppStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<VisionItem | null>(null)
-  const vision = s.vision.filter((v) => !v.archived)
+  const vision = sortByOrder(s.vision.filter((v) => !v.archived))
+  const move = (i: number, dir: -1 | 1) => {
+    const ids = vision.map((v) => v.id)
+    const j = i + dir
+    if (j < 0 || j >= ids.length) return
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    s.reorderVision(ids)
+  }
 
   return (
     <div className="space-y-6 pt-2">
@@ -61,6 +69,8 @@ export default function Vision() {
                     label={`Actions for ${v.title}`}
                     actions={[
                       { label: 'Edit', icon: '✎', onClick: () => setEditing(v) },
+                      ...(i > 0 ? [{ label: 'Move up', icon: '↑', onClick: () => move(i, -1) }] : []),
+                      ...(i < vision.length - 1 ? [{ label: 'Move down', icon: '↓', onClick: () => move(i, 1) }] : []),
                       { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateVision(v.id) },
                       { label: 'Archive', icon: '📦', onClick: () => { s.archiveVision(v.id); toast('Vision archived') } },
                       { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteVision(v.id); toast('Vision deleted') } },

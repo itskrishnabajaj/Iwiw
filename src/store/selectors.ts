@@ -17,6 +17,15 @@ export const AREA_META: Record<AreaKey, { label: string; color: string; emoji: s
 // (still recoverable from the archive view).
 export const notArchived = <T extends { archived?: boolean }>(arr: T[]): T[] => arr.filter((x) => !x.archived)
 
+// Stable order-aware sort for manually reorderable lists. Items without an
+// explicit `order` keep their current relative position (sorted after / by index),
+// so a never-reordered list renders exactly as before.
+export const sortByOrder = <T extends { order?: number }>(arr: T[]): T[] =>
+  arr
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => (a.item.order ?? a.index) - (b.item.order ?? b.index))
+    .map((x) => x.item)
+
 export function getLevel(s: AppData) {
   return levelFromXP(totalXP(s.xpEvents))
 }
