@@ -110,7 +110,7 @@ export default function Today() {
                           role="checkbox"
                           aria-checked={t.done}
                           aria-label={`${t.done ? 'Completed' : 'Mark done'}: ${t.title}`}
-                          className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors"
+                          className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-2 transition-colors"
                           style={{ borderColor: t.done ? meta.color : 'rgba(255,255,255,0.2)', background: t.done ? meta.color : 'transparent' }}
                         >
                           {t.done && (

@@ -108,7 +108,7 @@ function EditVisionModal({ item, onClose }: { item: VisionItem | null; onClose: 
   return (
     <Modal open={!!item} onClose={onClose} title="Edit vision">
       <div className="space-y-4">
-        <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+        <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <Input placeholder="Caption" value={caption} onChange={(e) => setCaption(e.target.value)} />
         <Input placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
         <div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
@@ -15,7 +15,10 @@ import { CountUp } from '@/components/ui/CountUp'
 import { Heatmap } from '@/components/ui/Heatmap'
 import { Particles } from '@/components/ui/Particles'
 import { PomodoroWidget } from '@/components/widgets/PomodoroWidget'
-import { Tag } from '@/components/ui/primitives'
+import { Tag, Textarea } from '@/components/ui/primitives'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
+import type { QuickNote } from '@/lib/types'
 import { useTrash } from '@/lib/useTrash'
 import { useWeather } from '@/hooks/useWeather'
 import { useTick } from '@/hooks/useTick'
@@ -46,6 +49,7 @@ export default function Home() {
   const trash = useTrash()
 
   const [note, setNote] = useState('')
+  const [editingNote, setEditingNote] = useState<QuickNote | null>(null)
 
   return (
     <div className="space-y-6 pt-2">
@@ -208,14 +212,34 @@ export default function Home() {
             {notes.slice(0, 6).map((n) => (
               <div key={n.id} className="group flex items-start justify-between gap-2 rounded-lg bg-white/[0.03] px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 break-words text-white/70">{n.text}</span>
-                <button onClick={() => { const t = window.prompt('Edit note', n.text); if (t != null) s.updateNote(n.id, t) }} aria-label="Edit note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-white focus-visible:opacity-100 group-hover:opacity-100">✎</button>
+                <button onClick={() => setEditingNote(n)} aria-label="Edit note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-white focus-visible:opacity-100 group-hover:opacity-100">✎</button>
                 <button onClick={() => trash('note', n)} aria-label="Delete note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
               </div>
             ))}
           </div>
         </GlassCard>
       </div>
+
+      <NoteEditModal note={editingNote} onClose={() => setEditingNote(null)} />
     </div>
+  )
+}
+
+function NoteEditModal({ note, onClose }: { note: QuickNote | null; onClose: () => void }) {
+  const updateNote = useAppStore((s) => s.updateNote)
+  const [text, setText] = useState('')
+  useEffect(() => { if (note) setText(note.text) }, [note])
+  const save = () => { if (note && text.trim()) updateNote(note.id, text.trim()); onClose() }
+  return (
+    <Modal open={!!note} onClose={onClose} title="Edit note">
+      <div className="space-y-4">
+        <Textarea rows={3} value={text} autoFocus onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save() }} />
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={save}>Save</Button>
+        </div>
+      </div>
+    </Modal>
   )
 }
 

@@ -162,7 +162,7 @@ function NewHabitModal({ open, onClose }: { open: boolean; onClose: () => void }
   return (
     <Modal open={open} onClose={onClose} title="New habit">
       <div className="space-y-4">
-        <Input placeholder="Habit name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        <Input placeholder="Habit name" value={name} onChange={(e) => setName(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <div>
           <div className="mb-1.5 text-xs text-white/40">Icon</div>
           <div className="flex flex-wrap gap-2">
@@ -209,7 +209,7 @@ function EditHabitModal({ habit, onClose }: { habit: Habit | null; onClose: () =
   return (
     <Modal open={!!habit} onClose={onClose} title="Edit habit">
       <div className="space-y-4">
-        <Input placeholder="Habit name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        <Input placeholder="Habit name" value={name} onChange={(e) => setName(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <div>
           <div className="mb-1.5 text-xs text-white/40">Icon</div>
           <div className="flex flex-wrap gap-2">

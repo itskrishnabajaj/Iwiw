@@ -157,7 +157,7 @@ function EditCourseModal({ course, onClose }: { course: Course | null; onClose: 
   return (
     <Modal open={!!course} onClose={onClose} title="Edit resource">
       <div className="space-y-4">
-        <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+        <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <div className="flex flex-wrap gap-2">
           {(Object.keys(SOURCE_COLOR) as Course['source'][]).map((src) => (
             <button key={src} onClick={() => setSource(src)} className={`rounded-lg px-3 py-1.5 text-sm ${source === src ? 'ring-1 ring-accent' : 'bg-white/5 text-white/60'}`} style={source === src ? { background: SOURCE_COLOR[src] + '30' } : undefined}>{src}</button>

@@ -24,7 +24,7 @@ export function CardActions({ actions, label = 'Item actions' }: { actions: Card
           e.stopPropagation()
           setOpen((v) => !v)
         }}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white"
+        className="flex h-10 w-10 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white"
       >
         <span className="text-lg leading-none">⋯</span>
       </button>

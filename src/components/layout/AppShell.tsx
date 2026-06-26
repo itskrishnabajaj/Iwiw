@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
 import { prettyDate } from '@/lib/dates'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { QuickCapture } from '@/components/quickcapture/QuickCapture'
 
 export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
+  const mainRef = useRef<HTMLElement>(null)
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -52,7 +54,7 @@ export function AppShell() {
             suspends — the shell stays mounted and content swaps instantly with
             no fade/fallback (the most stable, native-feeling behavior). The
             ErrorBoundary is keyed per route so an error never persists across navigation. */}
-        <main className="flex-1 overflow-y-auto px-4 pb-16 md:px-8">
+        <main ref={mainRef} className="flex-1 overflow-y-auto px-4 pb-16 md:px-8">
           <ErrorBoundary key={location.pathname} label={location.pathname.replace('/', '') || 'home'}>
             <div className="mx-auto max-w-7xl">
               <Outlet />
@@ -60,6 +62,8 @@ export function AppShell() {
           </ErrorBoundary>
         </main>
       </div>
+
+      <QuickCapture scrollRef={mainRef} />
     </div>
   )
 }

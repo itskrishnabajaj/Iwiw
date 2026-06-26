@@ -144,7 +144,7 @@ function NewGoalModal({ open, onClose }: { open: boolean; onClose: () => void })
   return (
     <Modal open={open} onClose={onClose} title="New goal">
       <div className="space-y-4">
-        <Input placeholder="Goal title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+        <Input placeholder="Goal title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="mb-1.5 text-xs text-white/40">Horizon</div>
@@ -207,7 +207,7 @@ function EditGoalModal({ goal, onClose }: { goal: Goal | null; onClose: () => vo
   return (
     <Modal open={!!goal} onClose={onClose} title="Edit goal">
       <div className="space-y-4">
-        <Input placeholder="Goal title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+        <Input placeholder="Goal title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="mb-1.5 text-xs text-white/40">Horizon</div>

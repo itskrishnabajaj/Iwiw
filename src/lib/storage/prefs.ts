@@ -15,6 +15,8 @@ export interface Prefs {
   sidebarCollapsed: boolean
   lastRoute: string
   onboarded: boolean
+  // Quick Capture: per-type use counts → long-press shows your most-used captures.
+  captureCounts: Record<string, number>
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -29,6 +31,7 @@ export const DEFAULT_PREFS: Prefs = {
   sidebarCollapsed: false,
   lastRoute: '/',
   onboarded: false,
+  captureCounts: {},
 }
 
 export const ACCENTS: Record<ThemeAccent, { name: string; from: string; to: string }> = {

@@ -8,53 +8,55 @@ import { LineChart, BarChart, RadarChart, DoughnutChart } from '@/components/cha
 import { useIntelligence, useProductivityScore } from '@/hooks/useIntelligence'
 import { lastNDates, iso } from '@/lib/dates'
 import { format, parseISO } from 'date-fns'
-import type { AreaKey } from '@/lib/types'
+import type { AreaKey, AppData } from '@/lib/types'
 
 const WEEKDAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export default function Analytics() {
-  const s = useAppStore()
+  // Narrow subscription: Analytics only depends on xpEvents + study logs, so a
+  // Quick Capture from this screen (e.g. a note) won't re-render its charts.
+  const xpEvents = useAppStore((st) => st.xpEvents)
+  const study = useAppStore((st) => st.mba.studyLogs)
   const reviews = useIntelligence(['weekly', 'monthly'])
   const productivity = useProductivityScore()
 
-  const balance = useMemo(() => lifeBalance(s), [s.xpEvents])
+  const balance = useMemo(() => lifeBalance({ xpEvents } as AppData), [xpEvents])
 
   // Most productive weekday & hour, from XP event timestamps.
   const productive = useMemo(() => {
     const byDay = new Array(7).fill(0)
     const byHour = new Array(24).fill(0)
-    for (const e of s.xpEvents) {
+    for (const e of xpEvents) {
       const d = new Date(e.ts)
       byDay[(d.getDay() + 6) % 7] += e.amount
       byHour[d.getHours()] += e.amount
     }
-    if (s.xpEvents.length === 0) return { day: '—', hour: null as number | null }
+    if (xpEvents.length === 0) return { day: '—', hour: null as number | null }
     const topDay = byDay.indexOf(Math.max(...byDay))
     const topHour = byHour.indexOf(Math.max(...byHour))
     return { day: WEEKDAY_NAMES[topDay], hour: topHour as number | null }
-  }, [s.xpEvents])
+  }, [xpEvents])
 
   // XP by area (last 14d) for doughnut
   const areaTotals = useMemo(() => {
     const cutoff = Date.now() - 14 * 86400000
     const totals: Record<string, number> = {}
-    for (const e of s.xpEvents) if (e.ts >= cutoff) totals[e.area] = (totals[e.area] || 0) + e.amount
+    for (const e of xpEvents) if (e.ts >= cutoff) totals[e.area] = (totals[e.area] || 0) + e.amount
     return totals
-  }, [s.xpEvents])
+  }, [xpEvents])
 
   // Daily XP momentum (last 30 days)
   const momentum = useMemo(() => {
     const dates = lastNDates(30)
     const map = new Map(dates.map((d) => [d, 0]))
-    for (const e of s.xpEvents) {
+    for (const e of xpEvents) {
       const d = iso(new Date(e.ts))
       if (map.has(d)) map.set(d, (map.get(d) || 0) + e.amount)
     }
     return { labels: dates.map((d) => format(parseISO(d), 'd MMM')), data: dates.map((d) => map.get(d) || 0) }
-  }, [s.xpEvents])
+  }, [xpEvents])
 
   // Study hours per weekday + most productive hour heuristic
-  const study = s.mba.studyLogs
   const hoursByWeekday = useMemo(() => {
     const buckets = [0, 0, 0, 0, 0, 0, 0]
     const counts = [0, 0, 0, 0, 0, 0, 0]

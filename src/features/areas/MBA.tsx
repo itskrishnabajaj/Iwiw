@@ -142,9 +142,9 @@ export default function MBA() {
                     <div className="mb-1 flex items-center justify-between text-sm">
                       <span>{t.topic}</span>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => s.bumpTopic(t.topic, -2)} aria-label={`Decrease ${t.topic} mastery`} className="h-7 w-7 rounded-lg bg-white/5 text-xs text-white/50 hover:bg-white/10">−</button>
+                        <button onClick={() => s.bumpTopic(t.topic, -2)} aria-label={`Decrease ${t.topic} mastery`} className="h-9 w-9 rounded-lg bg-white/5 text-sm text-white/50 hover:bg-white/10">−</button>
                         <span className="w-9 text-right tabular-nums text-white/60">{t.mastery}%</span>
-                        <button onClick={() => s.bumpTopic(t.topic, 2)} aria-label={`Increase ${t.topic} mastery`} className="h-7 w-7 rounded-lg bg-accent/70 text-xs">＋</button>
+                        <button onClick={() => s.bumpTopic(t.topic, 2)} aria-label={`Increase ${t.topic} mastery`} className="h-9 w-9 rounded-lg bg-accent/70 text-sm">＋</button>
                         <button onClick={() => trash('topic', t)} aria-label={`Delete ${t.topic}`} className="px-1 text-white/30 hover:text-bad">×</button>
                       </div>
                     </div>
