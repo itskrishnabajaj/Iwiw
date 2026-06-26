@@ -7,6 +7,7 @@ import { SectionTitle, Textarea, Input, EmptyState, ExampleBadge } from '@/compo
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import { getMoodEmoji, MOOD_LABELS } from '@/lib/constants'
 import { format, parseISO } from 'date-fns'
 import type { JournalEntry } from '@/lib/types'
@@ -24,6 +25,7 @@ export default function Journal() {
   const [form, setForm] = useState({ wentWell: '', didntGoWell: '', lessons: '', gratitude: '', ideas: '', mood: 4 })
   const [query, setQuery] = useState('')
   const [editing, setEditing] = useState<JournalEntry | null>(null)
+  const trash = useTrash()
   const entries = useMemo(() => s.journal.filter((e) => !e.archived), [s.journal])
 
   const set = (k: string, v: string | number) => setForm((p) => ({ ...p, [k]: v }))
@@ -122,8 +124,7 @@ export default function Journal() {
                   label="Journal entry actions"
                   actions={[
                     { label: 'Edit', icon: '✎', onClick: () => setEditing(e) },
-                    { label: 'Archive', icon: '📦', onClick: () => { s.archiveJournal(e.id); toast('Entry archived') } },
-                    { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteJournal(e.id); toast('Entry deleted') } },
+                    { label: 'Archive', icon: '📦', onClick: () => trash('journal', e) },
                   ]}
                 />
               </div>

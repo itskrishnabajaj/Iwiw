@@ -9,6 +9,7 @@ import { SectionTitle, Tag, Input, EmptyState, ExampleBadge } from '@/components
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { undoToast } from '@/lib/useTrash'
 import { goalProgress } from '@/lib/goals'
 import type { AreaKey, Goal, GoalHorizon } from '@/lib/types'
 
@@ -95,8 +96,7 @@ function GoalNode({ goal, all, depth, delay = 0, onEdit, onMoveUp, onMoveDown }:
                 { label: goal.done ? 'Mark not done' : 'Mark done', icon: '✓', onClick: () => s.updateGoal(goal.id, { done: !goal.done, progress: goal.done ? goal.progress : 100 }) },
                 { label: 'Add sub-goal', icon: '＋', onClick: () => s.addGoal({ title: 'New sub-goal', horizon: goal.horizon, area: goal.area, parentId: goal.id }) },
                 { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateGoal(goal.id) },
-                { label: 'Archive', icon: '📦', onClick: () => { s.archiveGoal(goal.id); toast('Goal archived') } },
-                { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteGoal(goal.id); toast('Goal deleted') } },
+                { label: 'Delete', icon: '🗑', danger: true, onClick: () => { const snap = [...all]; s.deleteGoal(goal.id); undoToast('Goal deleted', () => s.replaceCollection('goal', snap)) } },
               ]}
             />
           </div>

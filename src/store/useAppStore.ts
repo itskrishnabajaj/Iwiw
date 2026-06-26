@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { storage as storageService } from '@/lib/storage/StorageService'
 import { emptyData, exampleData, DATA_VERSION } from '@/lib/seed'
 import { todayISO } from '@/lib/dates'
+import { ENTITIES, type EntityKind } from '@/lib/entities'
 import type {
   AppData,
   AreaKey,
@@ -224,6 +225,13 @@ export interface AppStore extends AppData {
   markUnlocked: (ids: string[]) => void
   clearUnlockToast: () => void
   clearLevelUp: () => void
+
+  // Generic lifecycle (registry-driven; used by contextual delete + Archive view)
+  archiveEntity: (kind: EntityKind, key: string) => void
+  restoreEntity: (kind: EntityKind, key: string) => void
+  permaDelete: (kind: EntityKind, key: string) => void
+  reinsert: (kind: EntityKind, item: unknown, index: number) => void
+  replaceCollection: (kind: EntityKind, items: unknown[]) => void
 
   // Sample data
   loadSampleData: () => void
@@ -514,37 +522,81 @@ export const useAppStore = create<AppStore>()(
       clearUnlockToast: () => set({ newlyUnlocked: [] }),
       clearLevelUp: () => set({ pendingLevelUp: null }),
 
-      // ---- Sample data (opt-in showcase) ----
+      // ---- Generic lifecycle (registry-driven) ----
+      archiveEntity: (kind, key) =>
+        set((s) => {
+          const d = ENTITIES[kind]
+          const arr = d.get(s).map((x) => (String(x[d.key]) === key ? { ...x, archived: true, archivedAt: Date.now() } : x))
+          return d.patch(s, arr)
+        }),
+      restoreEntity: (kind, key) =>
+        set((s) => {
+          const d = ENTITIES[kind]
+          const arr = d.get(s).map((x) => (String(x[d.key]) === key ? { ...x, archived: false, archivedAt: undefined } : x))
+          return d.patch(s, arr)
+        }),
+      permaDelete: (kind, key) =>
+        set((s) => {
+          const d = ENTITIES[kind]
+          return d.patch(s, d.get(s).filter((x) => String(x[d.key]) !== key))
+        }),
+      reinsert: (kind, item, index) =>
+        set((s) => {
+          const d = ENTITIES[kind]
+          const arr = [...d.get(s)]
+          arr.splice(Math.max(0, Math.min(index, arr.length)), 0, item as Record<string, unknown>)
+          return d.patch(s, arr)
+        }),
+      replaceCollection: (kind, items) => set((s) => ENTITIES[kind].patch(s, items as Record<string, unknown>[])),
+
+      // ---- Sample data (fully isolated content-only sandbox) ----
+      // Loading/removing sample data ONLY adds/strips example-tagged list items.
+      // It never touches skills, xpEvents, scalar counters/metrics or personal
+      // metrics — so real XP / Level / achievements / streaks / heatmaps and any
+      // permanent metric are guaranteed untouched.
       hasSampleData: () => {
         const s = get()
         return (
-          s.xpEvents.some((e) => e.example) ||
-          s.tasks.some((t) => t.example) ||
-          s.mba.mocks.some((m) => m.example) ||
-          s.gym.workouts.some((w) => w.example) ||
-          s.finance.transactions.some((t) => t.example)
+          s.tasks.some((x) => x.example) ||
+          s.habits.some((x) => x.example) ||
+          s.goals.some((x) => x.example) ||
+          s.mba.mocks.some((x) => x.example) ||
+          s.mba.topics.some((x) => x.example) ||
+          s.mba.studyLogs.some((x) => x.example) ||
+          s.qr.items.some((x) => x.example) ||
+          s.qr.milestones.some((x) => x.example) ||
+          s.qr.checklist.some((x) => x.example) ||
+          s.qr.feedback.some((x) => x.example) ||
+          s.institutes.some((x) => x.example) ||
+          s.courses.some((x) => x.example) ||
+          s.gym.weights.some((x) => x.example) ||
+          s.gym.workouts.some((x) => x.example) ||
+          s.gym.prs.some((x) => x.example) ||
+          s.gym.daily.some((x) => x.example) ||
+          s.gym.measurements.some((x) => x.example) ||
+          s.finance.transactions.some((x) => x.example) ||
+          s.finance.subscriptions.some((x) => x.example) ||
+          s.journal.some((x) => x.example) ||
+          s.dayLogs.some((x) => x.example) ||
+          s.notes.some((x) => x.example) ||
+          s.vision.some((x) => x.example)
         )
       },
       loadSampleData: () =>
         set((s) => {
           const ex = exampleData()
           return {
-            skills: s.skills.map((sk) => {
-              const e = ex.skills.find((x) => x.id === sk.id)
-              return e ? { ...sk, xp: e.xp } : sk
-            }),
-            xpEvents: [...real(s.xpEvents), ...ex.xpEvents],
             tasks: [...real(s.tasks), ...ex.tasks],
             habits: [...real(s.habits), ...ex.habits],
             goals: [...real(s.goals), ...ex.goals],
             mba: {
-              ...ex.mba,
+              ...s.mba,
               mocks: [...real(s.mba.mocks), ...ex.mba.mocks],
               topics: [...real(s.mba.topics), ...ex.mba.topics],
               studyLogs: [...real(s.mba.studyLogs), ...ex.mba.studyLogs],
             },
             qr: {
-              ...ex.qr,
+              ...s.qr,
               items: [...real(s.qr.items), ...ex.qr.items],
               milestones: [...real(s.qr.milestones), ...ex.qr.milestones],
               checklist: [...real(s.qr.checklist), ...ex.qr.checklist],
@@ -553,6 +605,7 @@ export const useAppStore = create<AppStore>()(
             institutes: [...real(s.institutes), ...ex.institutes],
             courses: [...real(s.courses), ...ex.courses],
             gym: {
+              ...s.gym,
               weights: [...real(s.gym.weights), ...ex.gym.weights],
               workouts: [...real(s.gym.workouts), ...ex.gym.workouts],
               prs: [...real(s.gym.prs), ...ex.gym.prs],
@@ -560,11 +613,10 @@ export const useAppStore = create<AppStore>()(
               measurements: [...real(s.gym.measurements), ...ex.gym.measurements],
             },
             finance: {
-              ...ex.finance,
+              ...s.finance,
               transactions: [...real(s.finance.transactions), ...ex.finance.transactions],
               subscriptions: [...real(s.finance.subscriptions), ...ex.finance.subscriptions],
             },
-            personal: ex.personal,
             journal: [...real(s.journal), ...ex.journal],
             dayLogs: [...real(s.dayLogs), ...ex.dayLogs],
             notes: [...real(s.notes), ...ex.notes],
@@ -572,53 +624,43 @@ export const useAppStore = create<AppStore>()(
           }
         }),
       removeSampleData: () =>
-        set((s) => {
-          const empty = emptyData()
-          const realEvents = real(s.xpEvents)
-          return {
-            // Recompute each domain's XP from the user's REAL ledger only.
-            skills: s.skills.map((sk) => ({
-              ...sk,
-              xp: realEvents.filter((e) => e.skillId === sk.id).reduce((a, e) => a + e.amount, 0),
-            })),
-            xpEvents: realEvents,
-            tasks: real(s.tasks),
-            habits: real(s.habits),
-            goals: real(s.goals),
-            mba: {
-              ...empty.mba,
-              mocks: real(s.mba.mocks),
-              topics: real(s.mba.topics),
-              studyLogs: real(s.mba.studyLogs),
-            },
-            qr: {
-              ...empty.qr,
-              items: real(s.qr.items),
-              milestones: real(s.qr.milestones),
-              checklist: real(s.qr.checklist),
-              feedback: real(s.qr.feedback),
-            },
-            institutes: real(s.institutes),
-            courses: real(s.courses),
-            gym: {
-              weights: real(s.gym.weights),
-              workouts: real(s.gym.workouts),
-              prs: real(s.gym.prs),
-              daily: real(s.gym.daily),
-              measurements: real(s.gym.measurements),
-            },
-            finance: {
-              ...empty.finance,
-              transactions: real(s.finance.transactions),
-              subscriptions: real(s.finance.subscriptions),
-            },
-            personal: empty.personal,
-            journal: real(s.journal),
-            dayLogs: real(s.dayLogs),
-            notes: real(s.notes),
-            vision: real(s.vision),
-          }
-        }),
+        set((s) => ({
+          tasks: real(s.tasks),
+          habits: real(s.habits),
+          goals: real(s.goals),
+          mba: {
+            ...s.mba,
+            mocks: real(s.mba.mocks),
+            topics: real(s.mba.topics),
+            studyLogs: real(s.mba.studyLogs),
+          },
+          qr: {
+            ...s.qr,
+            items: real(s.qr.items),
+            milestones: real(s.qr.milestones),
+            checklist: real(s.qr.checklist),
+            feedback: real(s.qr.feedback),
+          },
+          institutes: real(s.institutes),
+          courses: real(s.courses),
+          gym: {
+            ...s.gym,
+            weights: real(s.gym.weights),
+            workouts: real(s.gym.workouts),
+            prs: real(s.gym.prs),
+            daily: real(s.gym.daily),
+            measurements: real(s.gym.measurements),
+          },
+          finance: {
+            ...s.finance,
+            transactions: real(s.finance.transactions),
+            subscriptions: real(s.finance.subscriptions),
+          },
+          journal: real(s.journal),
+          dayLogs: real(s.dayLogs),
+          notes: real(s.notes),
+          vision: real(s.vision),
+        })),
 
       resetData: () => set({ ...emptyData(), hydrated: true, lastLevel: 0, pendingLevelUp: null, newlyUnlocked: [] }),
     }),

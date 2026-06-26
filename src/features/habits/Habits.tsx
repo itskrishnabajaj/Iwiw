@@ -11,6 +11,7 @@ import { SectionTitle, Input, Segmented, EmptyState, ExampleBadge } from '@/comp
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import type { AreaKey, Habit } from '@/lib/types'
 
 export default function Habits() {
@@ -62,6 +63,7 @@ export default function Habits() {
 
 function HabitCard({ habit, delay, today, onEdit, onMoveUp, onMoveDown }: { habit: Habit; delay: number; today: string; onEdit: () => void; onMoveUp?: () => void; onMoveDown?: () => void }) {
   const s = useAppStore()
+  const trash = useTrash()
   const meta = AREA_META[habit.area]
   const cur = currentStreak(habit.log)
   const best = bestStreak(habit.log)
@@ -101,8 +103,7 @@ function HabitCard({ habit, delay, today, onEdit, onMoveUp, onMoveDown }: { habi
               { label: 'Edit', icon: '✎', onClick: onEdit },
               ...(onMoveUp ? [{ label: 'Move up', icon: '↑', onClick: onMoveUp }] : []),
               ...(onMoveDown ? [{ label: 'Move down', icon: '↓', onClick: onMoveDown }] : []),
-              { label: 'Archive', icon: '📦', onClick: () => { s.archiveHabit(habit.id); toast('Habit archived') } },
-              { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteHabit(habit.id); toast('Habit deleted') } },
+              { label: 'Delete', icon: '🗑', danger: true, onClick: () => trash('habit', habit) },
             ]}
           />
         </div>

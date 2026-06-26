@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
 import { todaysTasks, todayProgress, AREA_META } from '@/store/selectors'
-import toast from 'react-hot-toast'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Progress } from '@/components/ui/Progress'
 import { SectionTitle, Tag, Input, Segmented, EmptyState, ExampleBadge } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import { bigCelebrate } from '@/components/celebrate/confetti'
 import { prettyDate } from '@/lib/dates'
 import type { AreaKey, Block, Task } from '@/lib/types'
@@ -27,6 +27,7 @@ export default function Today() {
   const prevDone = useRef(tp.done)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Task | null>(null)
+  const trash = useTrash()
 
   // Celebrate when everything is completed
   useEffect(() => {
@@ -133,7 +134,7 @@ export default function Today() {
                           actions={[
                             { label: 'Edit', icon: '✎', onClick: () => setEditing(t) },
                             { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateTask(t.id) },
-                            { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteTask(t.id); toast('Task deleted') } },
+                            { label: 'Delete', icon: '🗑', danger: true, onClick: () => trash('task', t) },
                           ]}
                         />
                       </motion.div>

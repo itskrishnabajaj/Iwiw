@@ -6,6 +6,7 @@ import { SectionTitle, Stat, Tag, Input, EmptyState, Segmented } from '@/compone
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import { LineChart, BarChart } from '@/components/charts/Charts'
 import { Sparkline } from '@/components/ui/Sparkline'
 import { getMoodEmoji } from '@/lib/constants'
@@ -16,6 +17,7 @@ type LogKind = 'weight' | 'workout' | 'pr' | 'recovery' | 'measurement'
 
 export default function Gym() {
   const s = useAppStore()
+  const trash = useTrash()
   const [open, setOpen] = useState(false)
   const weights = s.gym.weights.filter((w) => !w.archived)
   const latest = weights[weights.length - 1]?.weight ?? 0
@@ -120,7 +122,7 @@ export default function Gym() {
                 <div><div className="flex items-center gap-2 text-sm font-medium">{pr.lift}</div><div className="text-[11px] text-white/40">{format(parseISO(pr.date), 'd MMM')}</div></div>
                 <div className="flex items-center gap-1">
                   <div className="text-xl font-bold text-warn">{pr.value}<span className="text-sm font-normal text-white/40">{pr.unit}</span></div>
-                  <CardActions label={`Actions for ${pr.lift}`} actions={[{ label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deletePR(pr.id); toast('PR deleted') } }]} />
+                  <CardActions label={`Actions for ${pr.lift}`} actions={[{ label: 'Archive', icon: '📦', onClick: () => trash('pr', pr) }]} />
                 </div>
               </div>
             ))}
@@ -144,7 +146,7 @@ export default function Gym() {
                     <td>{d.protein}g</td>
                     <td>{getMoodEmoji(d.mood)}</td>
                     <td><Tag color={d.recovery >= 75 ? '#34d399' : d.recovery >= 60 ? '#fbbf24' : '#fb7185'}>{d.recovery}%</Tag></td>
-                    <td><button onClick={() => { s.deleteGymDaily(d.date); toast('Day removed') }} aria-label="Delete day" className="px-1 text-white/30 hover:text-bad">×</button></td>
+                    <td><button onClick={() => trash('gymDaily', d)} aria-label="Delete day" className="px-1 text-white/30 hover:text-bad">×</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -162,7 +164,7 @@ export default function Gym() {
                 <div><span className="font-medium">{w.name}</span> <span className="text-[11px] text-white/35">{format(parseISO(w.date), 'd MMM')}</span></div>
                 <div className="flex items-center gap-2">
                   <span className="text-white/55">{w.volume.toLocaleString()}kg · {w.duration}m</span>
-                  <CardActions label={`Actions for ${w.name}`} actions={[{ label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteWorkout(w.id); toast('Workout deleted') } }]} />
+                  <CardActions label={`Actions for ${w.name}`} actions={[{ label: 'Archive', icon: '📦', onClick: () => trash('workout', w) }]} />
                 </div>
               </div>
             ))}

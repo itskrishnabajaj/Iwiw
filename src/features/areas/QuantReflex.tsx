@@ -10,6 +10,7 @@ import { SectionTitle, Stat, Tag, Input, EmptyState, ExampleBadge } from '@/comp
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import { format, parseISO } from 'date-fns'
 import { todayISO } from '@/lib/dates'
 import type { QRItem, QRStatus } from '@/lib/types'
@@ -31,6 +32,7 @@ export default function QuantReflex() {
   const [msOpen, setMsOpen] = useState(false)
   const [clOpen, setClOpen] = useState(false)
   const [fbOpen, setFbOpen] = useState(false)
+  const trash = useTrash()
 
   const items = s.qr.items.filter((i) => !i.archived)
   const milestones = s.qr.milestones.filter((m) => !m.archived)
@@ -130,8 +132,7 @@ export default function QuantReflex() {
                       <span className="text-sm">{TYPE_EMOJI[i.type]} {i.title}</span>
                       <CardActions label={`Actions for ${i.title}`} actions={[
                         { label: 'Edit', icon: '✎', onClick: () => setEditing(i) },
-                        { label: 'Archive', icon: '📦', onClick: () => { s.archiveQRItem(i.id); toast('Item archived') } },
-                        { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteQRItem(i.id); toast('Item deleted') } },
+                        { label: 'Delete', icon: '🗑', danger: true, onClick: () => trash('qrItem', i) },
                       ]} />
                     </div>
                     <div className="mt-2 flex items-center justify-between">
@@ -175,7 +176,7 @@ export default function QuantReflex() {
                   <span className={`text-sm ${m.done ? 'text-white/80' : 'text-white/60'}`}>{m.title}</span>
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] text-white/35">{format(parseISO(m.date), 'd MMM yyyy')}</span>
-                    <button onClick={() => { s.deleteMilestone(m.id); toast('Milestone removed') }} aria-label={`Delete ${m.title}`} className="px-1 text-white/30 opacity-0 transition hover:text-bad group-hover:opacity-100">×</button>
+                    <button onClick={() => trash('milestone', m)} aria-label={`Delete ${m.title}`} className="px-1 text-white/30 opacity-0 transition hover:text-bad group-hover:opacity-100">×</button>
                   </div>
                 </div>
               </div>
@@ -209,7 +210,7 @@ export default function QuantReflex() {
                           <span className="flex h-4 w-4 items-center justify-center rounded border-2 text-[10px]" style={{ borderColor: c.done ? '#34d399' : 'rgba(255,255,255,0.2)', background: c.done ? '#34d399' : 'transparent', color: '#07080d' }}>{c.done && '✓'}</span>
                           <span className={c.done ? 'text-white/40 line-through' : 'text-white/70'}>{c.label}</span>
                         </button>
-                        <button onClick={() => { s.deleteChecklist(c.id); toast('Task removed') }} aria-label={`Delete ${c.label}`} className="px-1 text-white/25 opacity-0 transition hover:text-bad group-hover:opacity-100">×</button>
+                        <button onClick={() => trash('checklist', c)} aria-label={`Delete ${c.label}`} className="px-1 text-white/25 opacity-0 transition hover:text-bad group-hover:opacity-100">×</button>
                       </div>
                     ))}
                   </div>
@@ -235,7 +236,7 @@ export default function QuantReflex() {
             <div key={f.id} className="group relative rounded-xl bg-white/[0.03] p-4">
               <div className="flex items-start justify-between">
                 <div className="text-sm text-warn">{'★'.repeat(f.rating)}<span className="text-white/15">{'★'.repeat(5 - f.rating)}</span></div>
-                <button onClick={() => { s.deleteFeedback(f.id); toast('Feedback removed') }} aria-label="Delete feedback" className="px-1 text-white/25 opacity-0 transition hover:text-bad group-hover:opacity-100">×</button>
+                <button onClick={() => trash('feedback', f)} aria-label="Delete feedback" className="px-1 text-white/25 opacity-0 transition hover:text-bad group-hover:opacity-100">×</button>
               </div>
               <p className="mt-2 text-sm text-white/70">“{f.text}”</p>
               <div className="mt-2 flex items-center gap-2 text-[11px] text-white/35">— {f.author} {f.example && <ExampleBadge />}</div>

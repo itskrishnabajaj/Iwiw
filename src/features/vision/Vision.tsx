@@ -8,6 +8,7 @@ import { SectionTitle, Input, EmptyState, ExampleBadge } from '@/components/ui/p
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import type { VisionItem } from '@/lib/types'
 
 const GRADIENTS = [
@@ -23,6 +24,7 @@ export default function Vision() {
   const s = useAppStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<VisionItem | null>(null)
+  const trash = useTrash()
   const vision = sortByOrder(s.vision.filter((v) => !v.archived))
   const move = (i: number, dir: -1 | 1) => {
     const ids = vision.map((v) => v.id)
@@ -72,8 +74,7 @@ export default function Vision() {
                       ...(i > 0 ? [{ label: 'Move up', icon: '↑', onClick: () => move(i, -1) }] : []),
                       ...(i < vision.length - 1 ? [{ label: 'Move down', icon: '↓', onClick: () => move(i, 1) }] : []),
                       { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateVision(v.id) },
-                      { label: 'Archive', icon: '📦', onClick: () => { s.archiveVision(v.id); toast('Vision archived') } },
-                      { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteVision(v.id); toast('Vision deleted') } },
+                      { label: 'Delete', icon: '🗑', danger: true, onClick: () => trash('vision', v) },
                     ]}
                   />
                 </div>

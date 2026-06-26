@@ -16,6 +16,7 @@ import { Heatmap } from '@/components/ui/Heatmap'
 import { Particles } from '@/components/ui/Particles'
 import { PomodoroWidget } from '@/components/widgets/PomodoroWidget'
 import { Tag } from '@/components/ui/primitives'
+import { useTrash } from '@/lib/useTrash'
 import { useWeather } from '@/hooks/useWeather'
 import { useTick } from '@/hooks/useTick'
 import { usePrefs } from '@/hooks/usePrefs'
@@ -42,6 +43,7 @@ export default function Home() {
   const gymToday = s.gym.workouts.some((w) => w.date === todayISO() && !w.archived)
   const topGoals = s.goals.filter((g) => (g.horizon === 'annual' || g.horizon === 'weekly') && !g.archived).slice(0, 3)
   const notes = s.notes.filter((n) => !n.archived)
+  const trash = useTrash()
 
   const [note, setNote] = useState('')
 
@@ -207,7 +209,7 @@ export default function Home() {
               <div key={n.id} className="group flex items-start justify-between gap-2 rounded-lg bg-white/[0.03] px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 break-words text-white/70">{n.text}</span>
                 <button onClick={() => { const t = window.prompt('Edit note', n.text); if (t != null) s.updateNote(n.id, t) }} aria-label="Edit note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-white focus-visible:opacity-100 group-hover:opacity-100">✎</button>
-                <button onClick={() => s.deleteNote(n.id)} aria-label="Delete note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
+                <button onClick={() => trash('note', n)} aria-label="Delete note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
               </div>
             ))}
           </div>

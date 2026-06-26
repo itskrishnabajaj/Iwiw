@@ -9,6 +9,7 @@ import { SectionTitle, Stat, Tag, Input, EmptyState, ExampleBadge } from '@/comp
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import type { Course } from '@/lib/types'
 
 const SOURCE_COLOR: Record<Course['source'], string> = {
@@ -19,6 +20,7 @@ export default function Learning() {
   const s = useAppStore()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Course | null>(null)
+  const trash = useTrash()
   const courses = sortByOrder(s.courses.filter((c) => !c.archived))
   const move = (i: number, dir: -1 | 1) => {
     const ids = courses.map((c) => c.id)
@@ -100,8 +102,7 @@ export default function Learning() {
                       ...(i > 0 ? [{ label: 'Move up', icon: '↑', onClick: () => move(i, -1) }] : []),
                       ...(i < courses.length - 1 ? [{ label: 'Move down', icon: '↓', onClick: () => move(i, 1) }] : []),
                       { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateCourse(c.id) },
-                      { label: 'Archive', icon: '📦', onClick: () => { s.archiveCourse(c.id); toast('Course archived') } },
-                      { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteCourse(c.id); toast('Course deleted') } },
+                      { label: 'Delete', icon: '🗑', danger: true, onClick: () => trash('course', c) },
                     ]}
                   />
                 </div>

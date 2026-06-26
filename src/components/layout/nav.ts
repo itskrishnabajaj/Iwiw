@@ -26,6 +26,7 @@ export const NAV: NavItem[] = [
   { label: 'Vision Board', to: '/vision', icon: '✧', group: 'system' },
   { label: 'Achievements', to: '/achievements', icon: '🏆', group: 'system' },
   { label: 'Focus Mode', to: '/focus', icon: '◐', group: 'system' },
+  { label: 'Archive', to: '/archive', icon: '🗄', group: 'system' },
   { label: 'Settings', to: '/settings', icon: '⚙', group: 'system' },
 ]
 

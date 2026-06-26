@@ -28,6 +28,7 @@ import Calendar from './features/calendar/Calendar'
 import Vision from './features/vision/Vision'
 import Achievements from './features/achievements/Achievements'
 import Focus from './features/focus/Focus'
+import Archive from './features/archive/Archive'
 import Settings from './features/settings/Settings'
 
 function Root() {
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       { path: 'calendar', element: <Calendar /> },
       { path: 'vision', element: <Vision /> },
       { path: 'achievements', element: <Achievements /> },
+      { path: 'archive', element: <Archive /> },
       { path: 'settings', element: <Settings /> },
     ],
   },

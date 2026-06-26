@@ -8,6 +8,7 @@ import { SectionTitle, Stat, Tag, Input, EmptyState, ExampleBadge } from '@/comp
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import { DoughnutChart, BarChart } from '@/components/charts/Charts'
 import { format, parseISO } from 'date-fns'
 
@@ -16,6 +17,7 @@ export default function Finance() {
   const [open, setOpen] = useState(false)
   const [subOpen, setSubOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const trash = useTrash()
   const fin = s.finance
   const transactions = fin.transactions.filter((t) => !t.archived)
   const subscriptions = fin.subscriptions.filter((x) => !x.archived)
@@ -92,7 +94,7 @@ export default function Finance() {
                 <div className="flex items-center gap-2">
                   <span className={`font-semibold tabular-nums ${t.amount > 0 ? 'text-good' : 'text-white/70'}`}>{t.amount > 0 ? '+' : '−'}₹{Math.abs(t.amount).toLocaleString('en-IN')}</span>
                   <span className="text-[11px] text-white/30">{format(parseISO(t.date), 'd MMM')}</span>
-                  <CardActions label={`Actions for ${t.label}`} actions={[{ label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteTransaction(t.id); toast('Transaction deleted') } }]} />
+                  <CardActions label={`Actions for ${t.label}`} actions={[{ label: 'Archive', icon: '📦', onClick: () => trash('transaction', t) }]} />
                 </div>
               </div>
             ))}
@@ -116,7 +118,7 @@ export default function Finance() {
                 <span className="flex items-center gap-2">{sub.name}{sub.example && <ExampleBadge />}</span>
                 <div className="flex items-center gap-1">
                   <span className="text-white/60">₹{sub.amount} <span className="text-[11px] text-white/30">/{sub.cycle.slice(0, 2)}</span></span>
-                  <CardActions label={`Actions for ${sub.name}`} actions={[{ label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteSubscription(sub.id); toast('Subscription removed') } }]} />
+                  <CardActions label={`Actions for ${sub.name}`} actions={[{ label: 'Delete', icon: '🗑', danger: true, onClick: () => trash('subscription', sub) }]} />
                 </div>
               </div>
             ))}

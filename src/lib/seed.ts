@@ -84,9 +84,14 @@ export function freshData(): AppData {
 }
 
 // ----------------------------------------------------------------------------
-// EXAMPLE data — the opt-in showcase. Identical structure, fully populated, with
-// EVERY item tagged `example: true` so the UI badges it and "Remove sample data"
-// can strip it while preserving anything the user created.
+// EXAMPLE data — an opt-in, fully ISOLATED sandbox. It populates module CONTENT
+// only (list collections), every item tagged `example: true` so the UI badges it
+// and "Remove sample data" strips it. It deliberately does NOT set xpEvents,
+// skill XP, scalar counters/metrics (MBA counters/plan, QR downloads/users/revenue,
+// finance savings/burn) or personal metrics — so sample data can NEVER affect real
+// XP / Level / achievements / streaks / heatmaps / analytics, and loading or
+// removing it can never modify a permanent personal metric. Real progression comes
+// only from genuine user actions.
 // ----------------------------------------------------------------------------
 const tag = <T extends object>(arr: T[]): T[] => arr.map((x) => ({ ...x, example: true as const }))
 
@@ -94,58 +99,33 @@ export function exampleData(): AppData {
   const today = todayISO()
   const d = emptyData()
 
-  d.skills = tag([
-    { id: 'sk_entre', name: 'Entrepreneur', area: 'qr', xp: 52000, icon: '🚀' },
-    { id: 'sk_quant', name: 'Quantitative Aptitude', area: 'mba', xp: 37500, icon: '🧮' },
-    { id: 'sk_comm', name: 'Communication', area: 'personal', xp: 17000, icon: '🗣️' },
-    { id: 'sk_disc', name: 'Discipline', area: 'personal', xp: 23000, icon: '⚔️' },
-    { id: 'sk_fit', name: 'Fitness', area: 'gym', xp: 10500, icon: '🏋️' },
-    { id: 'sk_learn', name: 'Learning', area: 'learn', xp: 14000, icon: '🧠' },
-    { id: 'sk_sales', name: 'Sales & Outreach', area: 'crm', xp: 8200, icon: '🤝' },
-  ])
-
-  d.xpEvents = tag(
-    buildStudyLogs().flatMap((l) => [
-      { id: uid('xp'), ts: new Date(l.date).getTime(), amount: Math.round(l.hours * 10), reason: 'Study session', area: 'mba' as const, skillId: 'sk_quant' },
-      { id: uid('xp'), ts: new Date(l.date).getTime() + 1, amount: l.questions, reason: 'Questions solved', area: 'mba' as const, skillId: 'sk_quant' },
-    ]),
-  )
-
+  // NOTE: skills stay at 0 XP, xpEvents stays empty — gamification is never faked.
   d.tasks = tag(TASKS.map((t) => ({ ...t, date: today })))
   d.habits = tag(buildHabits())
   d.goals = tag(buildGoals())
 
+  // MBA: list content only; scalar counters / plan / target stay at empty defaults.
   d.mba = {
+    ...d.mba,
     mocks: tag(buildMocks()),
     topics: tag(buildTopics()),
     studyLogs: tag(buildStudyLogs()),
-    pyqsSolved: 1240,
-    questionBankSolved: 3860,
-    revisionCycles: 2,
-    weeklyPlan: [
-      'Finish Time-Speed-Distance set',
-      'Complete 2 DILR sets daily',
-      'Reading comprehension: 4 RCs/day',
-      'Revise Number System',
-      '1 full mock + analysis',
-    ],
-    monthlyTarget: 'Cross 90%ile consistently in full mocks',
   }
 
+  // QuantReflex: roadmap/milestones/checklist/feedback only; metrics stay 0.
   const qr = buildQR()
   d.qr = {
+    ...d.qr,
     items: tag(qr.items),
     milestones: tag(qr.milestones),
     checklist: tag(qr.checklist),
-    downloads: qr.downloads,
-    users: qr.users,
-    revenue: qr.revenue,
     feedback: tag(qr.feedback),
   }
 
   d.institutes = tag(buildInstitutes())
   d.courses = tag(buildCourses())
 
+  // Gym: logged entries only (all list-based).
   const gym = buildGym()
   d.gym = {
     weights: tag(gym.weights),
@@ -155,15 +135,15 @@ export function exampleData(): AppData {
     measurements: tag(gym.measurements),
   }
 
+  // Finance: transactions + subscriptions only; savings/burn stay 0.
   const fin = buildFinance()
   d.finance = {
+    ...d.finance,
     transactions: tag(fin.transactions),
     subscriptions: tag(fin.subscriptions),
-    savings: fin.savings,
-    monthlyBurn: fin.monthlyBurn,
   }
 
-  d.personal = buildPersonal()
+  // personal metrics are intentionally left empty (never part of the sandbox).
 
   d.journal = tag([
     {
@@ -442,21 +422,6 @@ function buildFinance() {
     savings: 210000,
     monthlyBurn: 18000,
   }
-}
-
-function buildPersonal() {
-  const med: Record<string, number> = {}
-  const dw: Record<string, number> = {}
-  const st: Record<string, number> = {}
-  const pr: Record<string, number> = {}
-  for (let i = 0; i < 60; i++) {
-    const date = iso(subDays(new Date(), i))
-    med[date] = rng(date + 'med') > 0.3 ? Math.round(10 + rng(date) * 20) : 0
-    dw[date] = +(rng(date + 'dw') * 5).toFixed(1)
-    st[date] = +(2 + rng(date + 'st') * 4).toFixed(1)
-    pr[date] = Math.round(rng(date + 'pr') * 35)
-  }
-  return { meditationMinutes: med, deepWorkHours: dw, screenTime: st, pagesRead: pr }
 }
 
 function buildDayLogs() {

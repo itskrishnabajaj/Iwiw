@@ -10,6 +10,7 @@ import { SectionTitle, Stat, Tag, Input, Textarea, Segmented, EmptyState, Exampl
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import { LineChart, BarChart } from '@/components/charts/Charts'
 import { MBADeep } from './mba/MBADeep'
 import { format, parseISO } from 'date-fns'
@@ -22,6 +23,7 @@ export default function MBA() {
   const [mockOpen, setMockOpen] = useState(false)
   const [topicOpen, setTopicOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
+  const trash = useTrash()
   const pred = predictedPercentile(s)
   const streak = studyStreak(s)
   const focus = todayFocusScore(s)
@@ -143,7 +145,7 @@ export default function MBA() {
                         <button onClick={() => s.bumpTopic(t.topic, -2)} aria-label={`Decrease ${t.topic} mastery`} className="h-7 w-7 rounded-lg bg-white/5 text-xs text-white/50 hover:bg-white/10">−</button>
                         <span className="w-9 text-right tabular-nums text-white/60">{t.mastery}%</span>
                         <button onClick={() => s.bumpTopic(t.topic, 2)} aria-label={`Increase ${t.topic} mastery`} className="h-7 w-7 rounded-lg bg-accent/70 text-xs">＋</button>
-                        <button onClick={() => { s.deleteTopic(t.topic); toast('Topic removed') }} aria-label={`Delete ${t.topic}`} className="px-1 text-white/30 hover:text-bad">×</button>
+                        <button onClick={() => trash('topic', t)} aria-label={`Delete ${t.topic}`} className="px-1 text-white/30 hover:text-bad">×</button>
                       </div>
                     </div>
                     <Progress value={t.mastery} color={t.mastery >= 70 ? '#34d399' : t.mastery >= 50 ? '#fbbf24' : '#fb7185'} height={6} />
@@ -206,8 +208,7 @@ export default function MBA() {
                 <div><div className="text-xs text-white/40">Accuracy</div><div className="font-semibold">{m.accuracy}%</div></div>
                 <div><div className="text-xs text-white/40">Percentile</div><div className="text-lg font-bold text-accent-soft">{m.percentile}</div></div>
                 <CardActions label={`Actions for ${m.name}`} actions={[
-                  { label: 'Archive', icon: '📦', onClick: () => { s.archiveMock(m.id); toast('Mock archived') } },
-                  { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteMock(m.id); toast('Mock deleted') } },
+                  { label: 'Archive', icon: '📦', onClick: () => trash('mock', m) },
                 ]} />
               </div>
             </div>

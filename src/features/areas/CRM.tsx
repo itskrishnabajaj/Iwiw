@@ -7,6 +7,7 @@ import { SectionTitle, Stat, Tag, Input, Textarea, EmptyState, ExampleBadge } fr
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CardActions } from '@/components/ui/CardActions'
+import { useTrash } from '@/lib/useTrash'
 import { todayISO, iso } from '@/lib/dates'
 import { addDays } from 'date-fns'
 import type { Institute, PipelineStage } from '@/lib/types'
@@ -129,6 +130,7 @@ export default function CRM() {
 
 function InstituteCard({ inst, color, onEdit }: { inst: Institute; color: string; onEdit: () => void }) {
   const s = useAppStore()
+  const trash = useTrash()
   const idx = STAGES.findIndex((x) => x.key === inst.stage)
   return (
     <motion.div layout className="group rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
@@ -139,8 +141,7 @@ function InstituteCard({ inst, color, onEdit }: { inst: Institute; color: string
         </div>
         <CardActions label={`Actions for ${inst.name}`} actions={[
           { label: 'Edit', icon: '✎', onClick: onEdit },
-          { label: 'Archive', icon: '📦', onClick: () => { s.archiveInstitute(inst.id); toast('Institute archived') } },
-          { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteInstitute(inst.id); toast('Institute deleted') } },
+          { label: 'Archive', icon: '📦', onClick: () => trash('institute', inst) },
         ]} />
       </div>
       <div className="mt-2 space-y-0.5 text-[11px] text-white/45">
