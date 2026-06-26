@@ -9,9 +9,10 @@ interface PwaState {
   needRefresh: boolean
   offlineReady: boolean
   status: UpdateStatus
+  lastChecked: number | null
 }
 
-let state: PwaState = { needRefresh: false, offlineReady: false, status: 'idle' }
+let state: PwaState = { needRefresh: false, offlineReady: false, status: 'idle', lastChecked: null }
 let registration: ServiceWorkerRegistration | undefined
 let updateSW: ((reload?: boolean) => Promise<void>) | undefined
 let started = false
@@ -82,13 +83,13 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
     // Give the browser a tick to surface a waiting worker / fire onNeedRefresh.
     await new Promise((r) => setTimeout(r, 600))
     if (state.needRefresh || reg.waiting) {
-      set({ status: 'available', needRefresh: true })
+      set({ status: 'available', needRefresh: true, lastChecked: Date.now() })
       return 'available'
     }
-    set({ status: 'up-to-date' })
+    set({ status: 'up-to-date', lastChecked: Date.now() })
     return 'up-to-date'
   } catch {
-    set({ status: 'error' })
+    set({ status: 'error', lastChecked: Date.now() })
     return 'error'
   }
 }

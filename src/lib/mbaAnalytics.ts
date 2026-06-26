@@ -8,7 +8,7 @@ export const SECTIONS: Section[] = ['QA', 'VARC', 'DILR']
 // Average mastery + volume per section, from topic stats.
 export function sectionStats(mba: MBAState) {
   return SECTIONS.map((section) => {
-    const topics = mba.topics.filter((t) => t.section === section)
+    const topics = mba.topics.filter((t) => t.section === section && !t.archived)
     const mastery = topics.length ? Math.round(topics.reduce((a, t) => a + t.mastery, 0) / topics.length) : 0
     const questions = topics.reduce((a, t) => a + t.questionsSolved, 0)
     return { section, mastery, questions, topicCount: topics.length }
@@ -17,7 +17,7 @@ export function sectionStats(mba: MBAState) {
 
 // 7-day rolling average of daily study hours over the last `days` days.
 export function studyVelocity(mba: MBAState, days = 30) {
-  const byDate = new Map(mba.studyLogs.map((l) => [l.date, l.hours]))
+  const byDate = new Map(mba.studyLogs.filter((l) => !l.archived).map((l) => [l.date, l.hours]))
   const out: { date: string; rolling: number; raw: number }[] = []
   const now = new Date() // capture once so the loop can't straddle midnight
   for (let i = days - 1; i >= 0; i--) {
@@ -31,7 +31,7 @@ export function studyVelocity(mba: MBAState, days = 30) {
 
 // Linear projection of percentile toward the exam date, based on recent mock trend.
 export function percentileProjection(s: AppData): { current: number; projected: number; trendPerWeek: number } {
-  const mocks = [...s.mba.mocks].slice(-5)
+  const mocks = s.mba.mocks.filter((m) => !m.archived).slice(-5)
   if (mocks.length < 2) {
     const cur = mocks[0]?.percentile ?? 0
     return { current: cur, projected: cur, trendPerWeek: 0 }
@@ -47,5 +47,5 @@ export function percentileProjection(s: AppData): { current: number; projected: 
 
 // Topics below a mastery threshold, ordered weakest-first — the revision queue.
 export function revisionQueue(mba: MBAState, threshold = 70) {
-  return [...mba.topics].filter((t) => t.mastery < threshold).sort((a, b) => a.mastery - b.mastery)
+  return mba.topics.filter((t) => t.mastery < threshold && !t.archived).sort((a, b) => a.mastery - b.mastery)
 }

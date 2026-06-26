@@ -32,7 +32,7 @@ export default function Calendar() {
 
   const selLog = logMap.get(selected)
   const selXP = xpByDay.get(selected) || 0
-  const selTasks = s.tasks.filter((t) => t.date === selected)
+  const selTasks = s.tasks.filter((t) => t.date === selected && !t.archived)
 
   return (
     <div className="space-y-6 pt-2">

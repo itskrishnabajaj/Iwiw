@@ -95,12 +95,23 @@ export function Segmented<T extends string>({ value, onChange, options }: { valu
   )
 }
 
-export function EmptyState({ icon, title, hint }: { icon: string; title: string; hint?: string }) {
+export function EmptyState({ icon, title, hint, action }: { icon: string; title: string; hint?: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
+    <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
       <div className="mb-3 text-4xl opacity-70">{icon}</div>
       <p className="font-medium text-white/70">{title}</p>
-      {hint && <p className="mt-1 text-sm text-white/35">{hint}</p>}
+      {hint && <p className="mt-1 max-w-sm text-sm text-white/35">{hint}</p>}
+      {action && <div className="mt-5 flex flex-wrap items-center justify-center gap-2">{action}</div>}
     </div>
+  )
+}
+
+// Marks an item that came from the opt-in sample dataset, so a first-time user
+// always knows which data is real and which is a demo.
+export function ExampleBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-300 ring-1 ring-amber-400/30">
+      Example
+    </span>
   )
 }

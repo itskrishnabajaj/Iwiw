@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
 import { todaysTasks, todayProgress, AREA_META } from '@/store/selectors'
+import toast from 'react-hot-toast'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Progress } from '@/components/ui/Progress'
-import { SectionTitle, Tag, Input, Segmented } from '@/components/ui/primitives'
+import { SectionTitle, Tag, Input, Segmented, EmptyState, ExampleBadge } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { CardActions } from '@/components/ui/CardActions'
 import { bigCelebrate } from '@/components/celebrate/confetti'
 import { prettyDate } from '@/lib/dates'
-import type { AreaKey, Block } from '@/lib/types'
+import type { AreaKey, Block, Task } from '@/lib/types'
 
 const BLOCKS: { key: Block; label: string; icon: string; time: string }[] = [
   { key: 'morning', label: 'Morning', icon: '🌅', time: '5 AM – 12 PM' },
@@ -24,12 +26,30 @@ export default function Today() {
   const tp = todayProgress(s)
   const prevDone = useRef(tp.done)
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Task | null>(null)
 
   // Celebrate when everything is completed
   useEffect(() => {
     if (tp.total > 0 && tp.done === tp.total && prevDone.current < tp.total) bigCelebrate()
     prevDone.current = tp.done
   }, [tp.done, tp.total])
+
+  if (tasks.length === 0) {
+    return (
+      <div className="space-y-6 pt-2">
+        <SectionTitle title="Today" subtitle={`${prettyDate()} · your second brain`} action={<Button onClick={() => setOpen(true)}>＋ Add task</Button>} />
+        <GlassCard hoverable={false} className="p-2">
+          <EmptyState
+            icon="🌅"
+            title="Plan your day"
+            hint="Add tasks across your morning, afternoon, evening and night blocks. Completing them earns XP toward your level."
+            action={<Button onClick={() => setOpen(true)}>＋ Add your first task</Button>}
+          />
+        </GlassCard>
+        <AddTaskModal open={open} onClose={() => setOpen(false)} />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 pt-2">
@@ -100,14 +120,22 @@ export default function Today() {
                         </button>
                         <div className="min-w-0 flex-1">
                           <div className={`truncate text-sm transition ${t.done ? 'text-white/35 line-through' : 'text-white/85'}`}>{t.title}</div>
-                          <div className="mt-0.5 flex items-center gap-2">
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2">
                             {t.time && <span className="text-[10px] text-white/30">{t.time}</span>}
                             <Tag color={meta.color}>{meta.emoji} {meta.label}</Tag>
                             {t.priority && <span className="text-[10px] text-warn">★ priority</span>}
+                            {t.example && <ExampleBadge />}
                           </div>
                         </div>
                         <span className="text-[11px] font-semibold text-accent-soft">+{t.xp}</span>
-                        <button onClick={() => s.deleteTask(t.id)} aria-label={`Delete ${t.title}`} className="px-1 text-base leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
+                        <CardActions
+                          label={`Actions for ${t.title}`}
+                          actions={[
+                            { label: 'Edit', icon: '✎', onClick: () => setEditing(t) },
+                            { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateTask(t.id) },
+                            { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteTask(t.id); toast('Task deleted') } },
+                          ]}
+                        />
                       </motion.div>
                     )
                   })}
@@ -120,7 +148,66 @@ export default function Today() {
       </div>
 
       <AddTaskModal open={open} onClose={() => setOpen(false)} />
+      <EditTaskModal task={editing} onClose={() => setEditing(null)} />
     </div>
+  )
+}
+
+function EditTaskModal({ task, onClose }: { task: Task | null; onClose: () => void }) {
+  const updateTask = useAppStore((s) => s.updateTask)
+  const [title, setTitle] = useState('')
+  const [block, setBlock] = useState<Block>('morning')
+  const [area, setArea] = useState<AreaKey>('mba')
+  const [xp, setXp] = useState(25)
+  const [time, setTime] = useState('')
+  const [priority, setPriority] = useState(false)
+
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title); setBlock(task.block); setArea(task.area)
+      setXp(task.xp); setTime(task.time ?? ''); setPriority(!!task.priority)
+    }
+  }, [task])
+
+  const submit = () => {
+    if (!task || !title.trim()) return
+    updateTask(task.id, { title: title.trim(), block, area, xp, time: time || undefined, priority })
+    onClose()
+  }
+
+  return (
+    <Modal open={!!task} onClose={onClose} title="Edit task">
+      <div className="space-y-4">
+        <Input placeholder="Task" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        <div>
+          <div className="mb-1.5 text-xs text-white/40">Time block</div>
+          <Segmented value={block} onChange={setBlock} options={BLOCKS.map((b) => ({ label: b.label, value: b.key }))} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className="mb-1.5 text-xs text-white/40">Life area</div>
+            <select value={area} onChange={(e) => setArea(e.target.value as AreaKey)} className="w-full rounded-xl border border-white/10 bg-base-700 px-3 py-2.5 text-sm outline-none">
+              {Object.entries(AREA_META).map(([k, m]) => (<option key={k} value={k}>{m.emoji} {m.label}</option>))}
+            </select>
+          </div>
+          <div>
+            <div className="mb-1.5 text-xs text-white/40">Time (optional)</div>
+            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          </div>
+        </div>
+        <div>
+          <div className="mb-1.5 text-xs text-white/40">XP reward: {xp}</div>
+          <input type="range" min={5} max={100} step={5} value={xp} onChange={(e) => setXp(+e.target.value)} className="w-full accent-accent" />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-white/70">
+          <input type="checkbox" checked={priority} onChange={(e) => setPriority(e.target.checked)} className="accent-accent" /> Priority task
+        </label>
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit}>Save</Button>
+        </div>
+      </div>
+    </Modal>
   )
 }
 

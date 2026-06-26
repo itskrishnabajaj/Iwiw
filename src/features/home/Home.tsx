@@ -39,8 +39,9 @@ export default function Home() {
   const pct = predictedPercentile(s)
   const wXP = weeklyXP(s)
 
-  const gymToday = s.gym.workouts.some((w) => w.date === todayISO())
-  const topGoals = s.goals.filter((g) => g.horizon === 'annual' || g.horizon === 'weekly').slice(0, 3)
+  const gymToday = s.gym.workouts.some((w) => w.date === todayISO() && !w.archived)
+  const topGoals = s.goals.filter((g) => (g.horizon === 'annual' || g.horizon === 'weekly') && !g.archived).slice(0, 3)
+  const notes = s.notes.filter((n) => !n.archived)
 
   const [note, setNote] = useState('')
 
@@ -201,10 +202,11 @@ export default function Home() {
             <button aria-label="Add note" className="rounded-xl bg-accent px-3 text-sm font-semibold">+</button>
           </form>
           <div className="flex-1 space-y-2 overflow-y-auto no-scrollbar">
-            {s.notes.length === 0 && <p className="px-1 py-6 text-center text-sm text-white/30">No notes yet — jot down a spark.</p>}
-            {s.notes.slice(0, 6).map((n) => (
+            {notes.length === 0 && <p className="px-1 py-6 text-center text-sm text-white/30">No notes yet — jot down a spark.</p>}
+            {notes.slice(0, 6).map((n) => (
               <div key={n.id} className="group flex items-start justify-between gap-2 rounded-lg bg-white/[0.03] px-3 py-2 text-sm">
-                <span className="text-white/70">{n.text}</span>
+                <span className="min-w-0 flex-1 break-words text-white/70">{n.text}</span>
+                <button onClick={() => { const t = window.prompt('Edit note', n.text); if (t != null) s.updateNote(n.id, t) }} aria-label="Edit note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-white focus-visible:opacity-100 group-hover:opacity-100">✎</button>
                 <button onClick={() => s.deleteNote(n.id)} aria-label="Delete note" className="px-1 leading-none text-white/40 opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100">×</button>
               </div>
             ))}

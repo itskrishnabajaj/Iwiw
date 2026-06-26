@@ -13,13 +13,17 @@ export const AREA_META: Record<AreaKey, { label: string; color: string; emoji: s
   personal: { label: 'Personal', color: '#f472b6', emoji: '🌱', route: '/personal' },
 }
 
+// Items the user has soft-archived are hidden from lists, counts and analytics
+// (still recoverable from the archive view).
+export const notArchived = <T extends { archived?: boolean }>(arr: T[]): T[] => arr.filter((x) => !x.archived)
+
 export function getLevel(s: AppData) {
   return levelFromXP(totalXP(s.xpEvents))
 }
 
 export function todaysTasks(s: AppData) {
   const today = todayISO()
-  return s.tasks.filter((t) => t.date === today)
+  return s.tasks.filter((t) => t.date === today && !t.archived)
 }
 
 export function todayProgress(s: AppData) {
@@ -30,7 +34,7 @@ export function todayProgress(s: AppData) {
 
 export function studyStreak(s: AppData): number {
   const log: Record<string, boolean> = {}
-  for (const l of s.mba.studyLogs) if (l.hours > 0) log[l.date] = true
+  for (const l of s.mba.studyLogs) if (l.hours > 0 && !l.archived) log[l.date] = true
   return currentStreak(log)
 }
 
@@ -55,7 +59,7 @@ export function todayFocusScore(s: AppData): number {
 }
 
 export function predictedPercentile(s: AppData): number {
-  const recent = [...s.mba.mocks].slice(-3)
+  const recent = notArchived(s.mba.mocks).slice(-3)
   if (!recent.length) return 0
   const avg = recent.reduce((a, m) => a + m.percentile, 0) / recent.length
   // small optimistic trend bump

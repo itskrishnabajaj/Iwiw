@@ -13,6 +13,7 @@ import { bigCelebrate } from '@/components/celebrate/confetti'
 export default function Onboarding({ onDone }: { onDone: () => void }) {
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const loadSampleData = useAppStore((s) => s.loadSampleData)
   const [prefs, setPrefs] = usePrefs()
 
   const [step, setStep] = useState(0)
@@ -21,6 +22,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [catDate, setCatDate] = useState(settings.catDate)
   const [cetDate, setCetDate] = useState(settings.cetDate)
   const [accent, setAccent] = useState<ThemeAccent>('violet')
+  const [loadSample, setLoadSample] = useState(false)
 
   const steps = [
     {
@@ -66,8 +68,35 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
       ),
     },
     {
+      title: 'Start fresh, or explore first?',
+      sub: 'Your OS begins empty so every bit of progress is truly yours. Want to look around first? Load example data — clearly labelled and removable anytime from Settings.',
+      body: (
+        <div className="flex flex-col gap-3 text-left">
+          <button
+            onClick={() => setLoadSample(false)}
+            className={`rounded-2xl border p-4 transition ${!loadSample ? 'border-accent bg-accent/10' : 'border-white/10 hover:bg-white/5'}`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">Start fresh</span>
+              <span className="text-xs text-accent-soft">Recommended</span>
+            </div>
+            <p className="mt-1 text-xs text-white/50">Level 1, 0 XP. Beautiful empty states guide your first steps.</p>
+          </button>
+          <button
+            onClick={() => setLoadSample(true)}
+            className={`rounded-2xl border p-4 transition ${loadSample ? 'border-accent bg-accent/10' : 'border-white/10 hover:bg-white/5'}`}
+          >
+            <div className="font-semibold">Explore with sample data</div>
+            <p className="mt-1 text-xs text-white/50">Fills every module with example items (badged “Example”) you can remove later.</p>
+          </button>
+        </div>
+      ),
+    },
+    {
       title: `You're all set${name ? `, ${name}` : ''}.`,
-      sub: 'Your OS is seeded with realistic data so every screen feels alive from day one. Make it yours.',
+      sub: loadSample
+        ? 'Loaded with example data to explore — remove it anytime from Settings → Data.'
+        : 'Your OS starts empty and ready. Every point of progress from here is yours to earn.',
       body: <div className="text-6xl">🚀</div>,
     },
   ]
@@ -76,6 +105,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const next = () => {
     if (isLast) {
       updateSettings({ name: name.trim() || 'Krishna', mission, catDate, cetDate })
+      if (loadSample) loadSampleData()
       setPrefs({ onboarded: true, accent })
       bigCelebrate()
       onDone()

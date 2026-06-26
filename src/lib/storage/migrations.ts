@@ -10,14 +10,40 @@ export interface Migration {
   migrate: (data: Record<string, unknown>) => Record<string, unknown>
 }
 
+// Stamp an explicit `order` (by current index) on a list so manual reordering
+// has a stable baseline. Existing items are the user's REAL data — never tagged
+// `example`. `archived` is left undefined (= not archived) so selectors include them.
+function withOrder(v: unknown): unknown {
+  if (!Array.isArray(v)) return v
+  return v.map((item, i) =>
+    item && typeof item === 'object' && (item as Record<string, unknown>).order === undefined
+      ? { ...(item as object), order: i }
+      : item,
+  )
+}
+
 export const MIGRATIONS: Migration[] = [
-  // Example template for the next schema bump:
-  // {
-  //   from: 1,
-  //   to: 2,
-  //   describe: 'add `archived` flag to goals',
-  //   migrate: (d) => ({ ...d, goals: (d.goals as any[]).map((g) => ({ ...g, archived: false })) }),
-  // },
+  {
+    from: 1,
+    to: 2,
+    describe: 'lifecycle fields: backfill order on planning lists',
+    migrate: (d) => {
+      const next = { ...d }
+      next.goals = withOrder(d.goals)
+      next.habits = withOrder(d.habits)
+      next.courses = withOrder(d.courses)
+      next.vision = withOrder(d.vision)
+      next.institutes = withOrder(d.institutes)
+      next.tasks = withOrder(d.tasks)
+      const mba = d.mba as Record<string, unknown> | undefined
+      if (mba && typeof mba === 'object') next.mba = { ...mba, topics: withOrder(mba.topics) }
+      const qr = d.qr as Record<string, unknown> | undefined
+      if (qr && typeof qr === 'object') {
+        next.qr = { ...qr, items: withOrder(qr.items), milestones: withOrder(qr.milestones), checklist: withOrder(qr.checklist) }
+      }
+      return next
+    },
+  },
 ]
 
 // Apply migrations sequentially from `fromVersion` toward DATA_VERSION.

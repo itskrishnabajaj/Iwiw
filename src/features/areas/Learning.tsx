@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useAppStore } from '@/store/useAppStore'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Progress } from '@/components/ui/Progress'
 import { Ring } from '@/components/ui/Ring'
-import { SectionTitle, Stat, Tag, Input } from '@/components/ui/primitives'
+import { SectionTitle, Stat, Tag, Input, EmptyState, ExampleBadge } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { CardActions } from '@/components/ui/CardActions'
 import type { Course } from '@/lib/types'
 
 const SOURCE_COLOR: Record<Course['source'], string> = {
@@ -15,23 +17,40 @@ const SOURCE_COLOR: Record<Course['source'], string> = {
 export default function Learning() {
   const s = useAppStore()
   const [open, setOpen] = useState(false)
-  const totalHours = s.courses.reduce((a, c) => a + c.hoursInvested, 0)
-  const certs = s.courses.filter((c) => c.certificate).length
-  const avgProg = s.courses.length ? Math.round(s.courses.reduce((a, c) => a + c.progress, 0) / s.courses.length) : 0
+  const [editing, setEditing] = useState<Course | null>(null)
+  const courses = s.courses.filter((c) => !c.archived)
+  const totalHours = courses.reduce((a, c) => a + c.hoursInvested, 0)
+  const certs = courses.filter((c) => c.certificate).length
+  const avgProg = courses.length ? Math.round(courses.reduce((a, c) => a + c.progress, 0) / courses.length) : 0
 
   // Recommend the in-progress course closest to the finish line.
-  const upNext = [...s.courses].filter((c) => c.progress > 0 && c.progress < 100).sort((a, b) => b.progress - a.progress)[0]
-  const hoursBySource = s.courses.reduce<Record<string, number>>((acc, c) => { acc[c.source] = (acc[c.source] ?? 0) + c.hoursInvested; return acc }, {})
+  const upNext = [...courses].filter((c) => c.progress > 0 && c.progress < 100).sort((a, b) => b.progress - a.progress)[0]
+  const hoursBySource = courses.reduce<Record<string, number>>((acc, c) => { acc[c.source] = (acc[c.source] ?? 0) + c.hoursInvested; return acc }, {})
 
   return (
     <div className="space-y-6 pt-2">
       <SectionTitle title="📚 Learning" subtitle="Every course, book, and idea — compounding." action={<Button onClick={() => setOpen(true)}>＋ Course</Button>} />
 
+      {courses.length === 0 && (
+        <GlassCard hoverable={false} className="p-2">
+          <EmptyState
+            icon="📚"
+            title="Start your learning library"
+            hint="Add a course, book, podcast or video and track hours, progress and certificates as you go."
+            action={<Button onClick={() => setOpen(true)}>＋ Add a resource</Button>}
+          />
+        </GlassCard>
+      )}
+
+      {courses.length > 0 && (
+      <>
+
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <GlassCard className="p-5"><Stat label="Hours invested" value={totalHours.toFixed(0)} color="#60a5fa" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Certificates" value={certs} color="#34d399" /></GlassCard>
         <GlassCard className="p-5"><Stat label="Avg. completion" value={`${avgProg}%`} color="#a855f7" /></GlassCard>
-        <GlassCard className="p-5"><Stat label="In progress" value={s.courses.filter((c) => c.progress > 0 && c.progress < 100).length} color="#fbbf24" /></GlassCard>
+        <GlassCard className="p-5"><Stat label="In progress" value={courses.filter((c) => c.progress > 0 && c.progress < 100).length} color="#fbbf24" /></GlassCard>
       </div>
 
       {upNext && (
@@ -54,14 +73,28 @@ export default function Learning() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {s.courses.map((c, i) => {
+        {courses.map((c, i) => {
           const color = SOURCE_COLOR[c.source]
           const remaining = Math.max(0, c.totalHours - c.hoursInvested)
           return (
             <GlassCard key={c.id} className="p-5" tilt delay={i * 0.04} glow={color}>
-              <div className="flex items-start justify-between">
-                <Tag color={color}>{c.source}</Tag>
-                {c.certificate && <span title="Certificate earned" className="text-lg">🎓</span>}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Tag color={color}>{c.source}</Tag>
+                  {c.example && <ExampleBadge />}
+                </div>
+                <div className="flex items-center gap-1">
+                  {c.certificate && <span title="Certificate earned" className="text-lg">🎓</span>}
+                  <CardActions
+                    label={`Actions for ${c.title}`}
+                    actions={[
+                      { label: 'Edit', icon: '✎', onClick: () => setEditing(c) },
+                      { label: 'Duplicate', icon: '⧉', onClick: () => s.duplicateCourse(c.id) },
+                      { label: 'Archive', icon: '📦', onClick: () => { s.archiveCourse(c.id); toast('Course archived') } },
+                      { label: 'Delete', icon: '🗑', danger: true, onClick: () => { s.deleteCourse(c.id); toast('Course deleted') } },
+                    ]}
+                  />
+                </div>
               </div>
               <h3 className="mt-3 line-clamp-2 min-h-[2.6em] font-semibold leading-snug">{c.title}</h3>
               <div className="mt-4 flex items-center gap-4">
@@ -80,9 +113,60 @@ export default function Learning() {
           )
         })}
       </div>
+      </>
+      )}
 
       <AddCourseModal open={open} onClose={() => setOpen(false)} />
+      <EditCourseModal course={editing} onClose={() => setEditing(null)} />
     </div>
+  )
+}
+
+function EditCourseModal({ course, onClose }: { course: Course | null; onClose: () => void }) {
+  const updateCourse = useAppStore((s) => s.updateCourse)
+  const [title, setTitle] = useState('')
+  const [source, setSource] = useState<Course['source']>('Coursera')
+  const [totalHours, setTotalHours] = useState('10')
+  const [hoursInvested, setHoursInvested] = useState('0')
+  const [progress, setProgress] = useState('0')
+  const [certificate, setCertificate] = useState(false)
+  const [notes, setNotes] = useState('')
+  useEffect(() => {
+    if (course) {
+      setTitle(course.title); setSource(course.source); setTotalHours(String(course.totalHours))
+      setHoursInvested(String(course.hoursInvested)); setProgress(String(course.progress))
+      setCertificate(course.certificate); setNotes(course.notes)
+    }
+  }, [course])
+  const submit = () => {
+    if (!course || !title.trim()) return
+    updateCourse(course.id, { title: title.trim(), source, totalHours: +totalHours, hoursInvested: +hoursInvested, progress: +progress, certificate, notes })
+    onClose()
+  }
+  return (
+    <Modal open={!!course} onClose={onClose} title="Edit resource">
+      <div className="space-y-4">
+        <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(SOURCE_COLOR) as Course['source'][]).map((src) => (
+            <button key={src} onClick={() => setSource(src)} className={`rounded-lg px-3 py-1.5 text-sm ${source === src ? 'ring-1 ring-accent' : 'bg-white/5 text-white/60'}`} style={source === src ? { background: SOURCE_COLOR[src] + '30' } : undefined}>{src}</button>
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div><div className="mb-1.5 text-xs text-white/40">Total h</div><Input type="number" value={totalHours} onChange={(e) => setTotalHours(e.target.value)} /></div>
+          <div><div className="mb-1.5 text-xs text-white/40">Invested h</div><Input type="number" value={hoursInvested} onChange={(e) => setHoursInvested(e.target.value)} /></div>
+          <div><div className="mb-1.5 text-xs text-white/40">Progress %</div><Input type="number" value={progress} onChange={(e) => setProgress(e.target.value)} /></div>
+        </div>
+        <Input placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <label className="flex items-center gap-2 text-sm text-white/70">
+          <input type="checkbox" checked={certificate} onChange={(e) => setCertificate(e.target.checked)} className="accent-accent" /> Certificate earned
+        </label>
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit}>Save</Button>
+        </div>
+      </div>
+    </Modal>
   )
 }
 

@@ -8,7 +8,11 @@ import { ACCENTS, type ThemeAccent, type AnimationDensity } from '@/lib/storage/
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionTitle, Input, Segmented } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { format } from 'date-fns'
+import pkg from '../../../package.json'
+
+const APP_VERSION = pkg.version
 
 type Tab = 'data' | 'profile' | 'theme' | 'access' | 'perf'
 
@@ -53,6 +57,7 @@ export default function Settings() {
 function DataPanel() {
   const [diag, setDiag] = useState<Diagnostics | null>(null)
   const [backups, setBackups] = useState<BackupSnapshot[]>([])
+  const [resetConfirm, setResetConfirm] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const refresh = async () => {
@@ -100,11 +105,10 @@ function DataPanel() {
     toast.success('Restored from backup')
   }
   const onDefaults = async () => {
-    if (!confirm('Reset all data to fresh defaults? A backup is taken first.')) return
     await storage.restoreDefaults()
     await rehydrate()
     await refresh()
-    toast.success('Restored default data')
+    toast.success('Reset to an empty OS')
   }
   const onClearCache = async () => {
     await storage.clearCache()
@@ -159,16 +163,81 @@ function DataPanel() {
 
         <AppUpdatesCard />
 
+        <SampleDataCard onChanged={refresh} />
+
+        <SystemCard diag={diag} />
+
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-bad/90">Danger zone</h3>
           <p className="mt-1 text-sm text-white/45">These take a safety backup first, but proceed carefully.</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="glass" onClick={onClearCache}>Clear app cache</Button>
-            <Button variant="danger" onClick={onDefaults}>Restore default data</Button>
+            <Button variant="danger" onClick={() => setResetConfirm(true)}>Reset all data</Button>
           </div>
         </GlassCard>
       </div>
+
+      <ConfirmDialog
+        open={resetConfirm}
+        title="Reset all data?"
+        message="This clears every entry and returns the OS to an empty Level 1 state. A safety backup is taken first, so you can restore from the Backup snapshots list."
+        confirmLabel="Reset to empty"
+        onConfirm={onDefaults}
+        onClose={() => setResetConfirm(false)}
+      />
     </div>
+  )
+}
+
+function SampleDataCard({ onChanged }: { onChanged: () => void }) {
+  const loadSampleData = useAppStore((s) => s.loadSampleData)
+  const removeSampleData = useAppStore((s) => s.removeSampleData)
+  const hasSample = useAppStore((s) => s.hasSampleData())
+  return (
+    <GlassCard className="p-6">
+      <h3 className="text-lg font-semibold">Sample data</h3>
+      <p className="mt-1 text-sm text-white/45">
+        Explore every module with example content — each item is badged <span className="text-amber-300">Example</span> and never mixes with your real data.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="glass" onClick={() => { loadSampleData(); onChanged(); toast.success('Sample data loaded') }}>Load sample data</Button>
+        {hasSample && <Button variant="glass" onClick={() => { removeSampleData(); onChanged(); toast.success('Sample data removed') }}>Remove sample data</Button>}
+      </div>
+      {hasSample && <p className="mt-2 text-[11px] text-amber-300/80">Sample data is currently loaded.</p>}
+    </GlassCard>
+  )
+}
+
+function SystemCard({ diag }: { diag: Diagnostics | null }) {
+  const { status, lastChecked } = usePwaUpdate()
+  const [taps, setTaps] = useState(0)
+  const standalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true)
+  const dev = taps >= 5
+  const healthColor = !diag ? 'text-white/60' : diag.integrity === 'ok' ? 'text-good' : diag.integrity === 'repaired' || diag.integrity === 'recovered' ? 'text-warn' : 'text-white/60'
+  return (
+    <GlassCard className="p-6">
+      <h3 className="text-lg font-semibold">System</h3>
+      <div className="mt-3 space-y-2 text-sm">
+        <Row k="App version" v={<button onClick={() => setTaps((t) => t + 1)} className="tabular-nums">v{APP_VERSION}</button>} />
+        <Row k="Install mode" v={standalone ? 'Standalone (PWA)' : 'Browser tab'} />
+        <Row k="Update status" v={status === 'available' ? <span className="text-warn">update ready</span> : status === 'up-to-date' ? <span className="text-good">up to date</span> : status} />
+        <Row k="Last checked" v={lastChecked ? format(lastChecked, 'd MMM, HH:mm') : 'not yet'} />
+        <Row k="DB health" v={<span className={healthColor}>{diag ? diag.integrity : '…'}</span>} />
+      </div>
+      {dev && diag && (
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-accent-soft">Developer diagnostics</div>
+          <div className="space-y-1 text-[11px] text-white/55">
+            {diag.keys.map((k) => (
+              <div key={k.key} className="flex justify-between gap-3">
+                <span className="truncate font-mono">{k.key}</span>
+                <span className="tabular-nums text-white/40">{(k.bytes / 1024).toFixed(1)} KB</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </GlassCard>
   )
 }
 
@@ -230,6 +299,13 @@ function ProfilePanel() {
           <Field label="Birth date"><Input type="date" value={form.birthDate} onChange={(e) => set('birthDate', e.target.value)} /></Field>
           <Field label="Weather city"><Input value={form.weatherCity} onChange={(e) => set('weatherCity', e.target.value)} /></Field>
         </div>
+        <Field label="Weight units">
+          <Segmented
+            value={form.units ?? 'kg'}
+            onChange={(v: 'kg' | 'lbs') => setForm((p) => ({ ...p, units: v }))}
+            options={[{ label: 'kg', value: 'kg' }, { label: 'lbs', value: 'lbs' }]}
+          />
+        </Field>
         <div className="flex justify-end">
           <Button onClick={() => { updateSettings(form); toast.success('Profile saved') }}>Save profile</Button>
         </div>

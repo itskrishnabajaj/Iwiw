@@ -15,7 +15,7 @@ export function leafProgress(goal: Goal): number {
 export function goalProgress(goal: Goal, all: Goal[], visited: Set<string> = new Set()): number {
   if (visited.has(goal.id)) return leafProgress(goal)
   visited.add(goal.id)
-  const children = all.filter((g) => g.parentId === goal.id)
+  const children = all.filter((g) => g.parentId === goal.id && !g.archived)
   if (children.length === 0) return leafProgress(goal)
   return clamp(children.reduce((sum, c) => sum + goalProgress(c, all, visited), 0) / children.length)
 }

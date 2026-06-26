@@ -4,11 +4,206 @@ import type {
   AppData,
   Habit,
   ISODate,
+  Settings,
+  Skill,
   StudyLog,
   Task,
 } from './types'
 
-export const DATA_VERSION = 1
+export const DATA_VERSION = 2
+
+// Identity defaults belong to the OWNER (Krishna) — they are structure, not
+// fabricated progress, so a fresh start keeps them. Progress always starts at zero.
+export const DEFAULT_SETTINGS: Settings = {
+  name: 'Krishna',
+  mission:
+    'Build QuantReflex into India’s leading aptitude preparation platform while earning admission into a top MBA institute and becoming the best version of myself.',
+  birthDate: '2001-08-14',
+  catDate: '2026-11-29',
+  cetDate: '2027-03-07',
+  weatherCity: 'Pune',
+  weatherLat: 18.5204,
+  weatherLon: 73.8567,
+  reduceMotion: false,
+  units: 'kg',
+}
+
+// Life Domains — the structural categories that organize the OS. They start at
+// 0 XP (Level 1); XP is only ever earned through real activity.
+export const DOMAIN_SKILLS: Skill[] = [
+  { id: 'sk_entre', name: 'Entrepreneur', area: 'qr', xp: 0, icon: '🚀' },
+  { id: 'sk_quant', name: 'Quantitative Aptitude', area: 'mba', xp: 0, icon: '🧮' },
+  { id: 'sk_comm', name: 'Communication', area: 'personal', xp: 0, icon: '🗣️' },
+  { id: 'sk_disc', name: 'Discipline', area: 'personal', xp: 0, icon: '⚔️' },
+  { id: 'sk_fit', name: 'Fitness', area: 'gym', xp: 0, icon: '🏋️' },
+  { id: 'sk_learn', name: 'Learning', area: 'learn', xp: 0, icon: '🧠' },
+  { id: 'sk_sales', name: 'Sales & Outreach', area: 'crm', xp: 0, icon: '🤝' },
+]
+
+// ----------------------------------------------------------------------------
+// EMPTY first-run data — a clean, trustworthy foundation. Level 1, 0 XP, every
+// module empty. This is the default for a new install and for "Reset data".
+// ----------------------------------------------------------------------------
+export function emptyData(): AppData {
+  return {
+    version: DATA_VERSION,
+    settings: { ...DEFAULT_SETTINGS },
+    skills: DOMAIN_SKILLS.map((s) => ({ ...s })),
+    xpEvents: [],
+    tasks: [],
+    habits: [],
+    goals: [],
+    mba: {
+      mocks: [],
+      topics: [],
+      studyLogs: [],
+      pyqsSolved: 0,
+      questionBankSolved: 0,
+      revisionCycles: 0,
+      weeklyPlan: [],
+      monthlyTarget: '',
+    },
+    qr: { items: [], milestones: [], checklist: [], downloads: 0, users: 0, revenue: 0, feedback: [] },
+    institutes: [],
+    courses: [],
+    gym: { weights: [], workouts: [], prs: [], daily: [], measurements: [] },
+    finance: { transactions: [], subscriptions: [], savings: 0, monthlyBurn: 0 },
+    personal: { meditationMinutes: {}, deepWorkHours: {}, screenTime: {}, pagesRead: {} },
+    journal: [],
+    dayLogs: [],
+    unlockedAchievements: {},
+    notes: [],
+    vision: [],
+  }
+}
+
+// Back-compat alias: validation defaults, corruption fallback and reset all want
+// the empty foundation (never fabricated data).
+export function freshData(): AppData {
+  return emptyData()
+}
+
+// ----------------------------------------------------------------------------
+// EXAMPLE data — the opt-in showcase. Identical structure, fully populated, with
+// EVERY item tagged `example: true` so the UI badges it and "Remove sample data"
+// can strip it while preserving anything the user created.
+// ----------------------------------------------------------------------------
+const tag = <T extends object>(arr: T[]): T[] => arr.map((x) => ({ ...x, example: true as const }))
+
+export function exampleData(): AppData {
+  const today = todayISO()
+  const d = emptyData()
+
+  d.skills = tag([
+    { id: 'sk_entre', name: 'Entrepreneur', area: 'qr', xp: 52000, icon: '🚀' },
+    { id: 'sk_quant', name: 'Quantitative Aptitude', area: 'mba', xp: 37500, icon: '🧮' },
+    { id: 'sk_comm', name: 'Communication', area: 'personal', xp: 17000, icon: '🗣️' },
+    { id: 'sk_disc', name: 'Discipline', area: 'personal', xp: 23000, icon: '⚔️' },
+    { id: 'sk_fit', name: 'Fitness', area: 'gym', xp: 10500, icon: '🏋️' },
+    { id: 'sk_learn', name: 'Learning', area: 'learn', xp: 14000, icon: '🧠' },
+    { id: 'sk_sales', name: 'Sales & Outreach', area: 'crm', xp: 8200, icon: '🤝' },
+  ])
+
+  d.xpEvents = tag(
+    buildStudyLogs().flatMap((l) => [
+      { id: uid('xp'), ts: new Date(l.date).getTime(), amount: Math.round(l.hours * 10), reason: 'Study session', area: 'mba' as const, skillId: 'sk_quant' },
+      { id: uid('xp'), ts: new Date(l.date).getTime() + 1, amount: l.questions, reason: 'Questions solved', area: 'mba' as const, skillId: 'sk_quant' },
+    ]),
+  )
+
+  d.tasks = tag(TASKS.map((t) => ({ ...t, date: today })))
+  d.habits = tag(buildHabits())
+  d.goals = tag(buildGoals())
+
+  d.mba = {
+    mocks: tag(buildMocks()),
+    topics: tag(buildTopics()),
+    studyLogs: tag(buildStudyLogs()),
+    pyqsSolved: 1240,
+    questionBankSolved: 3860,
+    revisionCycles: 2,
+    weeklyPlan: [
+      'Finish Time-Speed-Distance set',
+      'Complete 2 DILR sets daily',
+      'Reading comprehension: 4 RCs/day',
+      'Revise Number System',
+      '1 full mock + analysis',
+    ],
+    monthlyTarget: 'Cross 90%ile consistently in full mocks',
+  }
+
+  const qr = buildQR()
+  d.qr = {
+    items: tag(qr.items),
+    milestones: tag(qr.milestones),
+    checklist: tag(qr.checklist),
+    downloads: qr.downloads,
+    users: qr.users,
+    revenue: qr.revenue,
+    feedback: tag(qr.feedback),
+  }
+
+  d.institutes = tag(buildInstitutes())
+  d.courses = tag(buildCourses())
+
+  const gym = buildGym()
+  d.gym = {
+    weights: tag(gym.weights),
+    workouts: tag(gym.workouts),
+    prs: tag(gym.prs),
+    daily: tag(gym.daily),
+    measurements: tag(gym.measurements),
+  }
+
+  const fin = buildFinance()
+  d.finance = {
+    transactions: tag(fin.transactions),
+    subscriptions: tag(fin.subscriptions),
+    savings: fin.savings,
+    monthlyBurn: fin.monthlyBurn,
+  }
+
+  d.personal = buildPersonal()
+
+  d.journal = tag([
+    {
+      id: uid('j'), date: today,
+      wentWell: 'Hit my QA target before 9 AM and felt sharp.',
+      didntGoWell: 'Skipped the second DILR set, got distracted.',
+      lessons: 'Phone in another room doubles my focus.',
+      gratitude: 'Grateful for a quiet library and a clear goal.',
+      ideas: 'QuantReflex could add spaced-repetition for wrong answers.',
+      mood: 4,
+    },
+    {
+      id: uid('j'), date: iso(subDays(new Date(), 1)),
+      wentWell: 'Closed a strong mock and called two coaching institutes.',
+      didntGoWell: 'Stayed up too late coding the leaderboard feature.',
+      lessons: 'Protect sleep — late nights tax the next morning study block.',
+      gratitude: 'Grateful for momentum on QuantReflex and supportive mentors.',
+      ideas: 'A campus ambassador program could drive QuantReflex installs.',
+      mood: 5,
+    },
+    {
+      id: uid('j'), date: iso(subDays(new Date(), 2)),
+      wentWell: 'Deep work block on Arithmetic felt effortless today.',
+      didntGoWell: 'Missed the gym, energy dipped in the evening.',
+      lessons: 'Schedule gym before deep work, not after.',
+      gratitude: 'Grateful for discipline that is slowly becoming identity.',
+      ideas: 'Add a focus timer streak inside the study workflow.',
+      mood: 3,
+    },
+  ])
+
+  d.dayLogs = tag(buildDayLogs())
+  d.notes = tag([
+    { id: uid('n'), text: 'Email IMS about partnership deck', ts: Date.now() - 3600_000 },
+    { id: uid('n'), text: 'Idea: QuantReflex streak-freeze power-up', ts: Date.now() - 7200_000 },
+  ])
+  d.vision = tag(buildVision())
+
+  return d
+}
 
 // Deterministic pseudo-random from a string seed (stable across reloads)
 function rng(seed: string): number {
@@ -24,7 +219,7 @@ function uid(p = 'id'): string {
   return `${p}_${Math.random().toString(36).slice(2, 9)}`
 }
 
-// ---- generated history -----------------------------------------------------
+// ---- generated history (example dataset only) ------------------------------
 function buildStudyLogs(): StudyLog[] {
   const logs: StudyLog[] = []
   for (let i = 120; i >= 0; i--) {
@@ -50,6 +245,18 @@ function buildHabitLog(seed: string, density: number): Record<ISODate, boolean> 
     if (rng(date + seed) < density) log[date] = true
   }
   return log
+}
+
+function buildHabits(): Habit[] {
+  return [
+    { id: uid('h'), name: 'Wake at 6 AM', area: 'personal', icon: '🌅', log: buildHabitLog('wake', 0.82), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 7 },
+    { id: uid('h'), name: 'Study 4+ hours', area: 'mba', icon: '📚', log: buildHabitLog('study', 0.85), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 6 },
+    { id: uid('h'), name: 'Gym session', area: 'gym', icon: '💪', log: buildHabitLog('gym', 0.7), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 5 },
+    { id: uid('h'), name: 'Meditate', area: 'personal', icon: '🧘', log: buildHabitLog('med', 0.75), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 7 },
+    { id: uid('h'), name: 'Ship QuantReflex code', area: 'qr', icon: '⚡', log: buildHabitLog('qr', 0.6), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 5 },
+    { id: uid('h'), name: 'No social media before noon', area: 'personal', icon: '🚫', log: buildHabitLog('nosm', 0.78), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 7 },
+    { id: uid('h'), name: 'Read 20 pages', area: 'learn', icon: '📖', log: buildHabitLog('read', 0.65), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 6 },
+  ]
 }
 
 function buildMocks() {
@@ -82,113 +289,6 @@ const TASKS: Omit<Task, 'date'>[] = [
   { id: uid('t'), title: 'Revise weak topics flashcards', block: 'night', area: 'mba', done: false, xp: 20, time: '21:30' },
   { id: uid('t'), title: 'Journal + plan tomorrow', block: 'night', area: 'personal', done: false, xp: 15, time: '22:30' },
 ]
-
-export function freshData(): AppData {
-  const today = todayISO()
-
-  const habits: Habit[] = [
-    { id: uid('h'), name: 'Wake at 6 AM', area: 'personal', icon: '🌅', log: buildHabitLog('wake', 0.82), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 7 },
-    { id: uid('h'), name: 'Study 4+ hours', area: 'mba', icon: '📚', log: buildHabitLog('study', 0.85), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 6 },
-    { id: uid('h'), name: 'Gym session', area: 'gym', icon: '💪', log: buildHabitLog('gym', 0.7), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 5 },
-    { id: uid('h'), name: 'Meditate', area: 'personal', icon: '🧘', log: buildHabitLog('med', 0.75), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 7 },
-    { id: uid('h'), name: 'Ship QuantReflex code', area: 'qr', icon: '⚡', log: buildHabitLog('qr', 0.6), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 5 },
-    { id: uid('h'), name: 'No social media before noon', area: 'personal', icon: '🚫', log: buildHabitLog('nosm', 0.78), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 7 },
-    { id: uid('h'), name: 'Read 20 pages', area: 'learn', icon: '📖', log: buildHabitLog('read', 0.65), createdAt: iso(subDays(new Date(), 95)), targetPerWeek: 6 },
-  ]
-
-  return {
-    version: DATA_VERSION,
-    settings: {
-      name: 'Krishna',
-      mission:
-        'Build QuantReflex into India’s leading aptitude preparation platform while earning admission into a top MBA institute and becoming the best version of myself.',
-      birthDate: '2001-08-14',
-      catDate: '2026-11-29',
-      cetDate: '2027-03-07',
-      weatherCity: 'Pune',
-      weatherLat: 18.5204,
-      weatherLon: 73.8567,
-      reduceMotion: false,
-    },
-    skills: [
-      { id: 'sk_entre', name: 'Entrepreneur', area: 'qr', xp: 52000, icon: '🚀' },
-      { id: 'sk_quant', name: 'Quantitative Aptitude', area: 'mba', xp: 37500, icon: '🧮' },
-      { id: 'sk_comm', name: 'Communication', area: 'personal', xp: 17000, icon: '🗣️' },
-      { id: 'sk_disc', name: 'Discipline', area: 'personal', xp: 23000, icon: '⚔️' },
-      { id: 'sk_fit', name: 'Fitness', area: 'gym', xp: 10500, icon: '🏋️' },
-      { id: 'sk_learn', name: 'Learning', area: 'learn', xp: 14000, icon: '🧠' },
-      { id: 'sk_sales', name: 'Sales & Outreach', area: 'crm', xp: 8200, icon: '🤝' },
-    ],
-    xpEvents: buildStudyLogs().flatMap((l) => [
-      { id: uid('xp'), ts: new Date(l.date).getTime(), amount: Math.round(l.hours * 10), reason: 'Study session', area: 'mba' as const, skillId: 'sk_quant' },
-      { id: uid('xp'), ts: new Date(l.date).getTime() + 1, amount: l.questions, reason: 'Questions solved', area: 'mba' as const, skillId: 'sk_quant' },
-    ]),
-    tasks: TASKS.map((t) => ({ ...t, date: today })),
-    habits,
-    goals: buildGoals(),
-    mba: {
-      mocks: buildMocks(),
-      topics: buildTopics(),
-      studyLogs: buildStudyLogs(),
-      pyqsSolved: 1240,
-      questionBankSolved: 3860,
-      revisionCycles: 2,
-      weeklyPlan: [
-        'Finish Time-Speed-Distance set',
-        'Complete 2 DILR sets daily',
-        'Reading comprehension: 4 RCs/day',
-        'Revise Number System',
-        '1 full mock + analysis',
-      ],
-      monthlyTarget: 'Cross 90%ile consistently in full mocks',
-    },
-    qr: buildQR(),
-    institutes: buildInstitutes(),
-    courses: buildCourses(),
-    gym: buildGym(),
-    finance: buildFinance(),
-    personal: buildPersonal(),
-    journal: [
-      {
-        id: uid('j'),
-        date: today,
-        wentWell: 'Hit my QA target before 9 AM and felt sharp.',
-        didntGoWell: 'Skipped the second DILR set, got distracted.',
-        lessons: 'Phone in another room doubles my focus.',
-        gratitude: 'Grateful for a quiet library and a clear goal.',
-        ideas: 'QuantReflex could add spaced-repetition for wrong answers.',
-        mood: 4,
-      },
-      {
-        id: uid('j'),
-        date: iso(subDays(new Date(), 1)),
-        wentWell: 'Closed a strong mock and called two coaching institutes.',
-        didntGoWell: 'Stayed up too late coding the leaderboard feature.',
-        lessons: 'Protect sleep — late nights tax the next morning study block.',
-        gratitude: 'Grateful for momentum on QuantReflex and supportive mentors.',
-        ideas: 'A campus ambassador program could drive QuantReflex installs.',
-        mood: 5,
-      },
-      {
-        id: uid('j'),
-        date: iso(subDays(new Date(), 2)),
-        wentWell: 'Deep work block on Arithmetic felt effortless today.',
-        didntGoWell: 'Missed the gym, energy dipped in the evening.',
-        lessons: 'Schedule gym before deep work, not after.',
-        gratitude: 'Grateful for discipline that is slowly becoming identity.',
-        ideas: 'Add a focus timer streak inside the study workflow.',
-        mood: 3,
-      },
-    ],
-    dayLogs: buildDayLogs(),
-    unlockedAchievements: {},
-    notes: [
-      { id: uid('n'), text: 'Email IMS about partnership deck', ts: Date.now() - 3600_000 },
-      { id: uid('n'), text: 'Idea: QuantReflex streak-freeze power-up', ts: Date.now() - 7200_000 },
-    ],
-    vision: buildVision(),
-  }
-}
 
 function buildGoals() {
   const annual = { id: 'g_cat', title: '99+ CAT Percentile', area: 'mba' as const, horizon: 'annual' as const, progress: 0, done: false }

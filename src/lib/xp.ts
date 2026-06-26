@@ -12,13 +12,17 @@ export function levelFromXP(xp: number): {
   needed: number
   pct: number
 } {
-  let level = 0
-  while (xpForLevel(level + 1) <= xp) level++
-  const floor = xpForLevel(level)
-  const ceil = xpForLevel(level + 1)
-  const into = xp - floor
+  // 1-indexed: a brand-new user (0 XP) is Level 1, not Level 0. Progression is
+  // earned — every level above 1 reflects real XP. `band` is the internal
+  // 0-based band used for the within-level progress math.
+  const safe = Math.max(0, xp)
+  let band = 0
+  while (xpForLevel(band + 1) <= safe) band++
+  const floor = xpForLevel(band)
+  const ceil = xpForLevel(band + 1)
+  const into = safe - floor
   const needed = ceil - floor
-  return { level, into, needed, pct: Math.round((into / needed) * 100) }
+  return { level: band + 1, into, needed, pct: Math.round((into / needed) * 100) }
 }
 
 export function totalXP(events: XPEvent[]): number {

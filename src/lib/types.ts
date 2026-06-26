@@ -23,6 +23,20 @@ export interface Settings {
   weatherLat: number
   weatherLon: number
   reduceMotion: boolean
+  units?: 'kg' | 'lbs'
+}
+
+// ---------------------------------------------------------------------------
+// Entity lifecycle (Phase 7)
+// ---------------------------------------------------------------------------
+// `example` marks an item that came from the opt-in sample dataset, so the UI
+// can badge it and "Remove sample data" can strip it. `archived`/`archivedAt`
+// soft-delete (history isn't lost). `order` drives manual reordering.
+export interface Lifecycle {
+  example?: boolean
+  archived?: boolean
+  archivedAt?: number
+  order?: number
 }
 
 // ---------------------------------------------------------------------------
@@ -34,6 +48,7 @@ export interface Skill {
   area: AreaKey
   xp: number
   icon: string
+  example?: boolean
 }
 
 export interface XPEvent {
@@ -43,6 +58,7 @@ export interface XPEvent {
   reason: string
   area: AreaKey
   skillId?: string
+  example?: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -50,7 +66,7 @@ export interface XPEvent {
 // ---------------------------------------------------------------------------
 export type Block = 'morning' | 'afternoon' | 'evening' | 'night'
 
-export interface Task {
+export interface Task extends Lifecycle {
   id: string
   title: string
   block: Block
@@ -65,7 +81,7 @@ export interface Task {
 // ---------------------------------------------------------------------------
 // Habits
 // ---------------------------------------------------------------------------
-export interface Habit {
+export interface Habit extends Lifecycle {
   id: string
   name: string
   area: AreaKey
@@ -81,7 +97,7 @@ export interface Habit {
 // ---------------------------------------------------------------------------
 export type GoalHorizon = 'annual' | 'quarterly' | 'monthly' | 'weekly' | 'daily'
 
-export interface Goal {
+export interface Goal extends Lifecycle {
   id: string
   title: string
   area: AreaKey
@@ -98,7 +114,7 @@ export interface Goal {
 // ---------------------------------------------------------------------------
 // MBA
 // ---------------------------------------------------------------------------
-export interface MockTest {
+export interface MockTest extends Lifecycle {
   id: string
   date: ISODate
   name: string
@@ -110,14 +126,14 @@ export interface MockTest {
   correct: number
 }
 
-export interface TopicStat {
+export interface TopicStat extends Lifecycle {
   topic: string
   section: 'VARC' | 'DILR' | 'QA'
   mastery: number // 0-100
   questionsSolved: number
 }
 
-export interface StudyLog {
+export interface StudyLog extends Lifecycle {
   date: ISODate
   hours: number
   questions: number
@@ -140,24 +156,30 @@ export interface MBAState {
 // QuantReflex
 // ---------------------------------------------------------------------------
 export type QRStatus = 'idea' | 'todo' | 'building' | 'done'
-export interface QRItem {
+export interface QRItem extends Lifecycle {
   id: string
   title: string
   type: 'feature' | 'bug' | 'idea' | 'marketing'
   status: QRStatus
   notes?: string
 }
-export interface Milestone {
+export interface Milestone extends Lifecycle {
   id: string
   title: string
   date: ISODate
   done: boolean
 }
-export interface ChecklistItem {
+export interface ChecklistItem extends Lifecycle {
   id: string
   label: string
   done: boolean
   group: string
+}
+export interface Feedback extends Lifecycle {
+  id: string
+  text: string
+  author: string
+  rating: number
 }
 export interface QRState {
   items: QRItem[]
@@ -166,7 +188,7 @@ export interface QRState {
   downloads: number
   users: number
   revenue: number
-  feedback: { id: string; text: string; author: string; rating: number }[]
+  feedback: Feedback[]
 }
 
 // ---------------------------------------------------------------------------
@@ -180,7 +202,7 @@ export type PipelineStage =
   | 'interested'
   | 'partner'
 
-export interface Institute {
+export interface Institute extends Lifecycle {
   id: string
   name: string
   location: string
@@ -197,7 +219,7 @@ export interface Institute {
 // ---------------------------------------------------------------------------
 // Learning
 // ---------------------------------------------------------------------------
-export interface Course {
+export interface Course extends Lifecycle {
   id: string
   title: string
   source: 'Coursera' | 'YouTube' | 'Book' | 'Podcast' | 'Article' | 'Paper'
@@ -211,25 +233,25 @@ export interface Course {
 // ---------------------------------------------------------------------------
 // Gym
 // ---------------------------------------------------------------------------
-export interface WeightEntry {
+export interface WeightEntry extends Lifecycle {
   date: ISODate
   weight: number
 }
-export interface Workout {
+export interface Workout extends Lifecycle {
   id: string
   date: ISODate
   name: string
   volume: number
   duration: number
 }
-export interface PR {
+export interface PR extends Lifecycle {
   id: string
   lift: string
   value: number
   unit: string
   date: ISODate
 }
-export interface GymDaily {
+export interface GymDaily extends Lifecycle {
   date: ISODate
   sleep: number
   water: number
@@ -238,25 +260,31 @@ export interface GymDaily {
   mood: number
   recovery: number
 }
+export interface Measurement extends Lifecycle {
+  date: ISODate
+  chest: number
+  waist: number
+  arms: number
+}
 export interface GymState {
   weights: WeightEntry[]
   workouts: Workout[]
   prs: PR[]
   daily: GymDaily[]
-  measurements: { date: ISODate; chest: number; waist: number; arms: number }[]
+  measurements: Measurement[]
 }
 
 // ---------------------------------------------------------------------------
 // Finance
 // ---------------------------------------------------------------------------
-export interface Transaction {
+export interface Transaction extends Lifecycle {
   id: string
   date: ISODate
   label: string
   amount: number // positive income, negative expense
   category: string
 }
-export interface Subscription {
+export interface Subscription extends Lifecycle {
   id: string
   name: string
   amount: number
@@ -282,7 +310,7 @@ export interface PersonalState {
 // ---------------------------------------------------------------------------
 // Journal & Calendar
 // ---------------------------------------------------------------------------
-export interface JournalEntry {
+export interface JournalEntry extends Lifecycle {
   id: string
   date: ISODate
   wentWell: string
@@ -293,7 +321,7 @@ export interface JournalEntry {
   mood: number
 }
 
-export interface DayLog {
+export interface DayLog extends Lifecycle {
   date: ISODate
   mood: number
   productivity: number
@@ -319,13 +347,13 @@ export interface Achievement {
 // ---------------------------------------------------------------------------
 // Notes / misc
 // ---------------------------------------------------------------------------
-export interface QuickNote {
+export interface QuickNote extends Lifecycle {
   id: string
   text: string
   ts: number
 }
 
-export interface VisionItem {
+export interface VisionItem extends Lifecycle {
   id: string
   title: string
   caption: string
