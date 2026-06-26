@@ -21,7 +21,9 @@ export const DEFAULT_PREFS: Prefs = {
   accent: 'violet',
   seasonalGreeting: true,
   reduceMotion: false,
-  particles: true,
+  // Off by default — the floating-particle canvas runs continuously and made the
+  // UI feel "busy/never resting". Opt back in via Settings → Performance.
+  particles: false,
   highContrast: false,
   animationDensity: 'full',
   sidebarCollapsed: false,

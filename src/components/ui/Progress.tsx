@@ -9,8 +9,9 @@ interface Props {
   liquid?: boolean
 }
 
-// Liquid-style progress bar with a moving shimmer highlight.
-export function Progress({ value, color = '#7c5cff', className, height = 8, liquid = true }: Props) {
+// Progress bar that fills once on view. `liquid` (off by default) adds a moving
+// shimmer — kept opt-in because, run on every bar, it never lets the UI rest.
+export function Progress({ value, color = '#7c5cff', className, height = 8, liquid = false }: Props) {
   const v = Math.max(0, Math.min(100, value))
   return (
     <div

@@ -61,28 +61,15 @@ export default {
         xs: '2px',
       },
       keyframes: {
-        aurora: {
-          '0%,100%': { transform: 'translate(0,0) scale(1)' },
-          '33%': { transform: 'translate(4%,-6%) scale(1.1)' },
-          '66%': { transform: 'translate(-4%,4%) scale(0.95)' },
-        },
-        float: {
-          '0%,100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
+        // Only `shimmer` remains — used by the loading Skeleton (shown briefly,
+        // not at idle). The continuous aurora/float/pulse-glow loops were removed
+        // to keep the UI visually quiet when nothing is happening.
         shimmer: {
           '100%': { transform: 'translateX(100%)' },
         },
-        'pulse-glow': {
-          '0%,100%': { opacity: '0.6' },
-          '50%': { opacity: '1' },
-        },
       },
       animation: {
-        aurora: 'aurora 18s ease-in-out infinite',
-        float: 'float 6s ease-in-out infinite',
         shimmer: 'shimmer 2s infinite',
-        'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
       },
     },
   },
