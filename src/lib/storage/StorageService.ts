@@ -1,6 +1,6 @@
 import { get, set, del, keys as idbKeys } from 'idb-keyval'
 import type { StateStorage } from 'zustand/middleware'
-import { freshData, DATA_VERSION } from '@/lib/seed'
+import { freshData, DATA_VERSION, hasUserContent } from '@/lib/seed'
 import type { AppData } from '@/lib/types'
 import { validateAppData } from './validate'
 import { runMigrations } from './migrations'
@@ -70,15 +70,23 @@ class StorageService {
       }
       return env.state
     } catch {
-      // corruption — try the most recent backup, else fresh defaults
-      const latest = (await this.listBackups())[0]
-      if (latest) {
+      // corruption — recover the most recent backup that actually has user
+      // content (an empty snapshot must never be chosen over real data).
+      const restored = await this.latestNonEmptyBackup()
+      if (restored) {
         this.lastIntegrity = 'recovered'
-        return latest.data
+        return restored
       }
       this.lastIntegrity = 'empty'
       return freshData()
     }
+  }
+
+  // Most recent backup that contains real user content, or null.
+  private async latestNonEmptyBackup(): Promise<AppData | null> {
+    const list = await this.listBackups() // already sorted newest-first
+    const good = list.find((b) => hasUserContent(b.data))
+    return good ? good.data : null
   }
 
   async save(data: AppData): Promise<void> {
@@ -112,6 +120,16 @@ class StorageService {
     } catch {
       return null
     }
+    // Never snapshot an effectively-empty state — empty backups could otherwise
+    // be restored over real data. Nothing to lose when there's no content.
+    if (!hasUserContent(data)) return null
+    return this.writeBackup(data, reason)
+  }
+
+  // Snapshot a specific, already-known AppData (used by the empty-overwrite guard
+  // to capture the OUTGOING data before it's replaced).
+  private async writeBackup(data: AppData, reason: BackupSnapshot['reason']): Promise<BackupSnapshot | null> {
+    if (!hasUserContent(data)) return null
     const snap: BackupSnapshot = { id: genId(), ts: Date.now(), version: DATA_VERSION, data, reason }
     const list = await this.listBackups()
     const next = [snap, ...list].slice(0, MAX_BACKUPS)
@@ -218,10 +236,10 @@ class StorageService {
           if (!env) return null
           return JSON.stringify(env)
         } catch {
-          const latest = (await this.listBackups())[0]
-          if (latest) {
+          const restored = await this.latestNonEmptyBackup()
+          if (restored) {
             this.lastIntegrity = 'recovered'
-            return JSON.stringify({ state: latest.data, version: DATA_VERSION })
+            return JSON.stringify({ state: restored, version: DATA_VERSION })
           }
           this.lastIntegrity = 'empty'
           return null
@@ -232,6 +250,7 @@ class StorageService {
         this.writeChain = this.writeChain
           .then(async () => {
             await this.maybeAutoBackup()
+            await this.guardEmptyOverwrite(name, value)
             await set(name, value)
           })
           .catch(() => {
@@ -242,6 +261,30 @@ class StorageService {
       removeItem: async (name) => {
         await del(name)
       },
+    }
+  }
+
+  // Defense-in-depth: if an EMPTY state is about to overwrite real stored data
+  // (e.g. after a transient read error caused an empty hydrate, then a write),
+  // snapshot the existing data first so it's always recoverable. Only does extra
+  // work on the rare empty write; non-empty writes hit the fast path.
+  private async guardEmptyOverwrite(name: string, value: string): Promise<void> {
+    if (name !== STORE_KEY) return
+    let incomingEmpty = false
+    try {
+      const parsed = JSON.parse(value) as { state?: AppData }
+      incomingEmpty = !hasUserContent(parsed.state as AppData)
+    } catch {
+      return // unparseable incoming — don't block the write
+    }
+    if (!incomingEmpty) return
+    try {
+      const env = await this.readEnvelope()
+      if (env && hasUserContent(env.state)) {
+        await this.writeBackup(env.state, 'auto')
+      }
+    } catch {
+      /* existing unreadable — nothing safe to snapshot */
     }
   }
 

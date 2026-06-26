@@ -267,6 +267,7 @@ export const useAppStore = create<AppStore>()(
       // ---- Tasks ----
       toggleTask: (taskId) =>
         set((s) => {
+          if (!s.tasks.some((x) => x.id === taskId)) return s // gone — no-op, never crash
           const tasks = s.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t))
           const t = tasks.find((x) => x.id === taskId)!
           if (t.done) applyXP(s, t.xp, `Task: ${t.title}`, t.area)
@@ -284,6 +285,7 @@ export const useAppStore = create<AppStore>()(
       // ---- Habits ----
       toggleHabit: (habitId, date) =>
         set((s) => {
+          if (!s.habits.some((x) => x.id === habitId)) return s // gone — no-op, never crash
           const habits = s.habits.map((h) => {
             if (h.id !== habitId) return h
             const log = { ...h.log }

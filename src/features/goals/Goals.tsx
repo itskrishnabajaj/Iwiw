@@ -163,7 +163,7 @@ function NewGoalModal({ open, onClose }: { open: boolean; onClose: () => void })
           <div className="mb-1.5 text-xs text-white/40">Parent goal (optional)</div>
           <select value={parentId} onChange={(e) => setParentId(e.target.value)} className="w-full rounded-xl border border-white/10 bg-base-700 px-3 py-2.5 text-sm outline-none">
             <option value="">— none (top-level) —</option>
-            {s.goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+            {s.goals.filter((g) => !g.archived).map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
           </select>
         </div>
         <div className="flex justify-end gap-2">

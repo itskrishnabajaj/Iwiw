@@ -9,6 +9,7 @@ import { GlassCard } from '@/components/ui/GlassCard'
 import { SectionTitle, Input, Segmented } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { geocodeCity } from '@/lib/geocode'
 import { format } from 'date-fns'
 import pkg from '../../../package.json'
 
@@ -282,8 +283,29 @@ function ProfilePanel() {
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [form, setForm] = useState(settings)
+  const [saving, setSaving] = useState(false)
   useEffect(() => setForm(settings), [settings])
   const set = (k: keyof typeof form, v: string | number) => setForm((p) => ({ ...p, [k]: v }))
+
+  const onSave = async () => {
+    const cityChanged = form.weatherCity.trim() && form.weatherCity.trim() !== settings.weatherCity.trim()
+    if (!cityChanged) {
+      updateSettings(form)
+      toast.success('Profile saved')
+      return
+    }
+    // Resolve the new city to coordinates so the weather widget shows it for real.
+    setSaving(true)
+    const geo = await geocodeCity(form.weatherCity)
+    setSaving(false)
+    if (geo) {
+      updateSettings({ ...form, weatherCity: form.weatherCity.trim(), weatherLat: geo.lat, weatherLon: geo.lon })
+      toast.success(`Profile saved · weather set to ${geo.label}`)
+    } else {
+      updateSettings(form) // keep the typed city + previous coords
+      toast('Profile saved · couldn’t find that city for weather (offline?)', { icon: '⚠️' })
+    }
+  }
 
   return (
     <GlassCard className="max-w-2xl p-6">
@@ -307,7 +329,7 @@ function ProfilePanel() {
           />
         </Field>
         <div className="flex justify-end">
-          <Button onClick={() => { updateSettings(form); toast.success('Profile saved') }}>Save profile</Button>
+          <Button onClick={onSave} disabled={saving}>{saving ? 'Saving…' : 'Save profile'}</Button>
         </div>
       </div>
     </GlassCard>

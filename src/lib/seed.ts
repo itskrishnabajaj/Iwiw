@@ -83,6 +83,33 @@ export function freshData(): AppData {
   return emptyData()
 }
 
+// Does this state contain ANY real user content? Used by the backup/recovery
+// layer so an effectively-empty snapshot can never poison recovery or silently
+// overwrite real data. Ignores the structural scaffold (settings + zero-XP skills).
+export function hasUserContent(d: AppData): boolean {
+  if (!d) return false
+  const lists = [
+    d.xpEvents, d.tasks, d.habits, d.goals, d.institutes, d.courses, d.journal,
+    d.dayLogs, d.notes, d.vision,
+    d.mba?.mocks, d.mba?.topics, d.mba?.studyLogs,
+    d.qr?.items, d.qr?.milestones, d.qr?.checklist, d.qr?.feedback,
+    d.gym?.weights, d.gym?.workouts, d.gym?.prs, d.gym?.daily, d.gym?.measurements,
+    d.finance?.transactions, d.finance?.subscriptions,
+  ]
+  if (lists.some((a) => Array.isArray(a) && a.length > 0)) return true
+  const m = d.mba
+  if (m && (m.pyqsSolved || m.questionBankSolved || m.revisionCycles || m.weeklyPlan?.length || (m.monthlyTarget ?? '').trim())) return true
+  const q = d.qr
+  if (q && (q.downloads || q.users || q.revenue)) return true
+  const f = d.finance
+  if (f && (f.savings || f.monthlyBurn)) return true
+  const p = d.personal
+  if (p && [p.meditationMinutes, p.deepWorkHours, p.screenTime, p.pagesRead].some((r) => r && Object.keys(r).length > 0)) return true
+  if (d.skills?.some((s) => s.xp > 0)) return true
+  if (d.unlockedAchievements && Object.keys(d.unlockedAchievements).length > 0) return true
+  return false
+}
+
 // ----------------------------------------------------------------------------
 // EXAMPLE data — an opt-in, fully ISOLATED sandbox. It populates module CONTENT
 // only (list collections), every item tagged `example: true` so the UI badges it
